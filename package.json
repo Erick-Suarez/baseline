@@ -17,6 +17,7 @@
     "prettier": "^2.8.6"
   },
   "scripts": {
-    "prepare": "husky install"
+    "prepare": "husky install",
+    "dev-server": "cd apps/baseline-chat-backend && npm run dev"
   }
 }
