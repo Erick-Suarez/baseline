@@ -29,12 +29,12 @@ const chatHistory: Array<string> = [];
 const chatModel = new ChatOpenAI({
   openAIApiKey: process.env.OPEN_AI_KEY,
   temperature: 0.1,
-  streaming: true,
-  callbackManager: CallbackManager.fromHandlers({
-    async handleLLMNewToken(token) {
-      process.stdout.write(token);
-    },
-  }),
+  // streaming: true,
+  // callbackManager: CallbackManager.fromHandlers({
+  //   async handleLLMNewToken(token) {
+  //     process.stdout.write(token);
+  //   },
+  // }),
 });
 
 const historySummaryPromptTemplate = `

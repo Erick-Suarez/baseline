@@ -3,7 +3,6 @@ import { LLMChain } from 'langchain/chains';
 import { OpenAIEmbeddings } from 'langchain/embeddings';
 import { PineconeClient } from '@pinecone-database/pinecone';
 import { PineconeStore } from 'langchain/vectorstores';
-import { CallbackManager } from 'langchain/callbacks';
 import { PromptTemplate } from 'langchain/prompts';
 import * as dotenv from 'dotenv';
 dotenv.config();
@@ -20,12 +19,12 @@ const chatHistory = [];
 const chatModel = new ChatOpenAI({
     openAIApiKey: process.env.OPEN_AI_KEY,
     temperature: 0.1,
-    streaming: true,
-    callbackManager: CallbackManager.fromHandlers({
-        async handleLLMNewToken(token) {
-            process.stdout.write(token);
-        },
-    }),
+    // streaming: true,
+    // callbackManager: CallbackManager.fromHandlers({
+    //   async handleLLMNewToken(token) {
+    //     process.stdout.write(token);
+    //   },
+    // }),
 });
 const historySummaryPromptTemplate = `
 ---

@@ -1,0 +1,10 @@
+### Query Request 
+POST http://localhost:3000/question
+content-Type: application/json
+
+{
+    "question": "What is a VIN"
+}
+
+### Test 
+GET http://localhost:3000/

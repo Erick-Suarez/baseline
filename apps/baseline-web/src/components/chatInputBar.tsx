@@ -29,10 +29,11 @@ export const ChatInputBar = ({
         onKeyDown={(e) => {
           if (e.key === 'Enter') {
             setLoading(true);
-            setTimeout(() => {
-              setLoading(false);
-              handleSubmit(e);
-            }, 1000);
+            // setTimeout(() => {
+            //   setLoading(false);
+            //   handleSubmit(e);
+            // }, 1000);
+            handleSubmit(e);
           }
         }}
       />

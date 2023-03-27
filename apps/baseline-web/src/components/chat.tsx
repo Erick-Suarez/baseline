@@ -5,6 +5,7 @@ import { RiRefreshLine } from 'react-icons/ri';
 import { ChatInputBar } from '@components/chatInputBar';
 import { useState, useRef, useEffect } from 'react';
 import { HUMAN_PROFILE_IMAGE, AI_PROFILE_IMAGE } from '@utils/images';
+import { io, Socket } from 'socket.io-client';
 
 interface content {
   type: 'text' | 'javascript';
@@ -22,60 +23,14 @@ enum chatEntities {
 }
 
 export const Chat = () => {
-  const [chatEntryList, setChatEntry] = useState<chatEntry[]>([
-    {
-      sender: chatEntities.HUMAN,
-      data: [
-        {
-          type: 'text',
-          data: `Lorem ipsum dolor sit amet, consectetur adipiscing elit. Morbi aliquet
-          pretium libero vel mattis. Etiam lacinia congue dapibus. Sed ut nibh
-          consectetur, molestie lacus vel, ornare eros.`,
-        },
-      ],
-    },
+  const [socketConnection, setSocketConnection] = useState<Socket | null>(null);
+  const [chatEntryList, setChatEntryList] = useState<chatEntry[]>([
     {
       sender: chatEntities.AI,
       data: [
         {
           type: 'text',
-          data: `Lorem ipsum dolor sit amet, 
-        consectetur adipiscing elit. Morbi aliquet pretium libero vel mattis. Etiam lacinia congue dapibus. 
-        Sed ut nibh consectetur, molestie lacus vel, ornare eros. Duis at laoreet turpis. 
-        Nullam ultrices venenatis purus, at rutrum quam euismod ut. 
-        Donec purus ante, blandit eu porta in, sollicitudin vel orci. 
-        Nullam nec nulla rhoncus, pulvinar nisl in, ornare nulla. 
-        Mauris sit amet bibendum augue. Nam auctor et erat at ultrices. 
-        Vivamus eget odio laoreet, mattis lorem quis, hendrerit lorem. Nulla facilisis vestibulum tempus. 
-        In viverra eu ligula a malesuada.`,
-        },
-        {
-          type: 'javascript',
-          data: `
-        import React from "react"; 
-        import uniquePropHOC from "./lib/unique-prop-hoc";
-        
-        // this comment is here to demonstrate an extremely long line length, well beyond what you should probably allow in your own code, though sometimes you'll be highlighting code you can't refactor, which is unfortunate but should be handled gracefully
-        
-        class Expire extends React.Component {
-            constructor(props) {
-                super(props);
-                this.state = { component: props.children }
-            }
-            componentDidMount() {
-                setTimeout(() => {
-                    this.setState({
-                        component: null
-                    });
-                }, this.props.time || this.props.seconds * 1000);
-            }
-            render() {
-                return this.state.component;
-            }
-        }
-        
-        export default uniquePropHOC(["time", "seconds"])(Expire);
-        `,
+          data: 'Hey I am Baseline AI! Type something to get started',
         },
       ],
     },
@@ -85,7 +40,7 @@ export const Chat = () => {
   const chatBoxEnd = useRef(null);
 
   function _handleResetChat() {
-    setChatEntry([
+    setChatEntryList([
       {
         sender: chatEntities.AI,
         data: [
@@ -108,7 +63,11 @@ export const Chat = () => {
         ...chatEntryList,
       ] as chatEntry[];
 
-      setChatEntry(updatedChatDataList);
+      if (socketConnection) {
+        socketConnection.emit('query-request', { query: inputValue });
+      }
+
+      setChatEntryList(updatedChatDataList);
       setInputValue('');
     }
   }
@@ -117,6 +76,31 @@ export const Chat = () => {
     //@ts-expect-error ScrollIntoView is set to null initially but will be assigned after first render
     chatBoxEnd.current?.scrollIntoView({ behavior: 'smooth' });
   }
+
+  useEffect(() => {
+    const socket = io('http://localhost:3000');
+
+    setSocketConnection(socket);
+
+    socket.on('query-response', (data) => {
+      console.log(data);
+      console.log(chatEntryList);
+
+      const updatedChatDataList = [
+        {
+          sender: chatEntities.AI,
+          data: [{ type: 'text', data: data.result }],
+        },
+        ...chatEntryList,
+      ] as chatEntry[];
+
+      setChatEntryList(updatedChatDataList);
+    });
+
+    return () => {
+      socket.close();
+    };
+  }, [chatEntryList]);
 
   useEffect(() => {
     _scrollToBottom();
@@ -139,15 +123,20 @@ export const Chat = () => {
         <div className="flex h-full w-full flex-col-reverse overflow-y-auto pt-5">
           <div ref={chatBoxEnd} />
           {chatEntryList.reverse().map((chatData, index) => {
+            const chatBlockId = `chatBlock_${index}`;
             return (
               <ChatBlock
-                key={index}
+                key={chatBlockId}
                 type={chatData.sender}
                 hideSeperator={index === 0}
               >
-                {chatData.data.map((content) => {
+                {chatData.data.map((content, index) => {
                   return (
-                    <Content content={content.data} language={content.type} />
+                    <Content
+                      key={`${chatBlockId}_content_${index}`}
+                      content={content.data}
+                      language={content.type}
+                    />
                   );
                 })}
               </ChatBlock>
