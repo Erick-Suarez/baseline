@@ -6,6 +6,7 @@ import { ChatInputBar } from '@components/chatInputBar';
 import { useState, useRef, useEffect } from 'react';
 import { HUMAN_PROFILE_IMAGE, AI_PROFILE_IMAGE } from '@utils/images';
 import { io, Socket } from 'socket.io-client';
+import BeatLoader from 'react-spinners/BeatLoader';
 
 interface content {
   type: 'text' | 'javascript';
@@ -13,20 +14,21 @@ interface content {
 }
 
 interface chatEntry {
-  sender: chatEntities;
+  type: entryTypes;
   data: content[];
 }
 
-enum chatEntities {
+enum entryTypes {
   HUMAN = 'human',
   AI = 'ai',
+  LOADING = 'loading',
 }
 
 export const Chat = () => {
   const [socketConnection, setSocketConnection] = useState<Socket | null>(null);
   const [chatEntryList, setChatEntryList] = useState<chatEntry[]>([
     {
-      sender: chatEntities.AI,
+      type: entryTypes.AI,
       data: [
         {
           type: 'text',
@@ -36,13 +38,14 @@ export const Chat = () => {
     },
   ]);
   const [inputValue, setInputValue] = useState<string>('');
+  const [waitingForResponse, setWaitingForResponse] = useState<boolean>(false);
 
   const chatBoxEnd = useRef(null);
 
   function _handleResetChat() {
     setChatEntryList([
       {
-        sender: chatEntities.AI,
+        type: entryTypes.AI,
         data: [
           {
             type: 'text',
@@ -51,24 +54,31 @@ export const Chat = () => {
         ],
       },
     ]);
+
+    setInputValue('');
+    setWaitingForResponse(false);
+  }
+
+  function _addNewEntryToChatDataList(entry: chatEntry) {
+    const updatedChatDataList = [entry, ...chatEntryList] as chatEntry[];
+
+    setChatEntryList(updatedChatDataList);
   }
 
   function _handleSubmit() {
     if (inputValue.length > 0) {
-      const updatedChatDataList = [
-        {
-          sender: chatEntities.HUMAN,
-          data: [{ type: 'text', data: inputValue }],
-        },
-        ...chatEntryList,
-      ] as chatEntry[];
+      const newHumanEntry: chatEntry = {
+        type: entryTypes.HUMAN,
+        data: [{ type: 'text', data: inputValue }],
+      };
 
       if (socketConnection) {
         socketConnection.emit('query-request', { query: inputValue });
       }
 
-      setChatEntryList(updatedChatDataList);
+      _addNewEntryToChatDataList(newHumanEntry);
       setInputValue('');
+      setWaitingForResponse(true);
     }
   }
 
@@ -88,13 +98,14 @@ export const Chat = () => {
 
       const updatedChatDataList = [
         {
-          sender: chatEntities.AI,
+          type: entryTypes.AI,
           data: [{ type: 'text', data: data.result }],
         },
         ...chatEntryList,
       ] as chatEntry[];
 
       setChatEntryList(updatedChatDataList);
+      setWaitingForResponse(false);
     });
 
     return () => {
@@ -122,12 +133,13 @@ export const Chat = () => {
       <div className="mb-5 h-full w-full overflow-clip rounded-xl shadow-lg">
         <div className="flex h-full w-full flex-col-reverse overflow-y-auto pt-5">
           <div ref={chatBoxEnd} />
+          {waitingForResponse && <ChatBlock type={entryTypes.LOADING} />}
           {chatEntryList.reverse().map((chatData, index) => {
             const chatBlockId = `chatBlock_${index}`;
             return (
               <ChatBlock
                 key={chatBlockId}
-                type={chatData.sender}
+                type={chatData.type}
                 hideSeperator={index === 0}
               >
                 {chatData.data.map((content, index) => {
@@ -162,18 +174,41 @@ export const ChatBlock = ({
   hideSeperator,
   type,
 }: {
-  type: chatEntities;
-  children: JSX.Element | JSX.Element[];
+  type: entryTypes;
+  children?: JSX.Element | JSX.Element[];
   hideSeperator?: boolean;
 }) => {
+  const [requestHasTimedOut, setRequestHasTimedOut] = useState<boolean>(false);
+  const timeoutLimit = 20000;
+
   let profile_src = '';
   switch (type) {
-    case chatEntities.HUMAN:
+    case entryTypes.HUMAN:
       profile_src = HUMAN_PROFILE_IMAGE;
       break;
 
-    case chatEntities.AI:
+    case entryTypes.AI:
       profile_src = AI_PROFILE_IMAGE;
+      break;
+
+    case entryTypes.LOADING:
+      profile_src = AI_PROFILE_IMAGE;
+      children = (
+        <div>
+          {!requestHasTimedOut && <BeatLoader size={12} color={'#818cf8'} />}
+          {requestHasTimedOut && (
+            <p className="font-semibold text-red-500">
+              Request has timed out. Server might be down or you may need to
+              reset chat and try again.
+            </p>
+          )}
+        </div>
+      );
+      if (!requestHasTimedOut) {
+        setTimeout(() => {
+          setRequestHasTimedOut(true);
+        }, timeoutLimit);
+      }
       break;
 
     default:

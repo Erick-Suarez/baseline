@@ -105,7 +105,7 @@ async function custom_call(query: string) {
   const qaRes = await QAchain.call({
     chat_history: chatHistory,
     context: context,
-    query: query,
+    query: `${historySummaryChainRes.text}\n${query}`,
   });
 
   chatHistory.push(`human: ${query}\nAI: ${qaRes.text}`);
