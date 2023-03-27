@@ -18,6 +18,7 @@
   },
   "scripts": {
     "prepare": "husky install",
-    "dev-server": "cd apps/baseline-chat-backend && npm run dev"
+    "dev-server": "cd apps/baseline-chat-backend && npm run dev",
+    "dev-web": "cd apps/baseline-web && npm run dev"
   }
 }

@@ -4,19 +4,27 @@ import { atomDark } from 'react-syntax-highlighter/dist/esm/styles/prism';
 import { RiRefreshLine } from 'react-icons/ri';
 import { ChatInputBar } from '@components/chatInputBar';
 import { useState, useRef, useEffect } from 'react';
+import { HUMAN_PROFILE_IMAGE, AI_PROFILE_IMAGE } from '@utils/images';
 
 interface content {
   type: 'text' | 'javascript';
   data: string;
 }
 
-interface chatData {
+interface chatEntry {
+  sender: chatEntities;
   data: content[];
 }
 
+enum chatEntities {
+  HUMAN = 'human',
+  AI = 'ai',
+}
+
 export const Chat = () => {
-  const [chatDataList, setChatDataList] = useState<chatData[]>([
+  const [chatEntryList, setChatEntry] = useState<chatEntry[]>([
     {
+      sender: chatEntities.HUMAN,
       data: [
         {
           type: 'text',
@@ -27,6 +35,7 @@ export const Chat = () => {
       ],
     },
     {
+      sender: chatEntities.AI,
       data: [
         {
           type: 'text',
@@ -76,8 +85,9 @@ export const Chat = () => {
   const chatBoxEnd = useRef(null);
 
   function _handleResetChat() {
-    setChatDataList([
+    setChatEntry([
       {
+        sender: chatEntities.AI,
         data: [
           {
             type: 'text',
@@ -89,22 +99,28 @@ export const Chat = () => {
   }
 
   function _handleSubmit() {
-    const updatedChatDataList = [...chatDataList];
-    updatedChatDataList.push({
-      data: [{ type: 'text', data: inputValue }],
-    });
+    if (inputValue.length > 0) {
+      const updatedChatDataList = [
+        {
+          sender: chatEntities.HUMAN,
+          data: [{ type: 'text', data: inputValue }],
+        },
+        ...chatEntryList,
+      ] as chatEntry[];
 
-    setChatDataList(updatedChatDataList);
-    setInputValue('');
+      setChatEntry(updatedChatDataList);
+      setInputValue('');
+    }
   }
 
   function _scrollToBottom() {
+    //@ts-expect-error ScrollIntoView is set to null initially but will be assigned after first render
     chatBoxEnd.current?.scrollIntoView({ behavior: 'smooth' });
   }
 
   useEffect(() => {
     _scrollToBottom();
-  }, [chatDataList]);
+  }, [chatEntryList]);
 
   return (
     <div className="flex h-[95vh] max-h-[1080px] w-[80vw] max-w-[1440px] flex-col px-2">
@@ -120,10 +136,15 @@ export const Chat = () => {
         </button>
       </div>
       <div className="mb-5 h-full w-full overflow-clip rounded-xl shadow-lg">
-        <div className="flex h-full w-full flex-col overflow-y-auto pt-5">
-          {chatDataList.map((chatData) => {
+        <div className="flex h-full w-full flex-col-reverse overflow-y-auto pt-5">
+          <div ref={chatBoxEnd} />
+          {chatEntryList.reverse().map((chatData, index) => {
             return (
-              <ChatBlock>
+              <ChatBlock
+                key={index}
+                type={chatData.sender}
+                hideSeperator={index === 0}
+              >
                 {chatData.data.map((content) => {
                   return (
                     <Content content={content.data} language={content.type} />
@@ -132,7 +153,6 @@ export const Chat = () => {
               </ChatBlock>
             );
           })}
-          <div ref={chatBoxEnd} />
         </div>
       </div>
       <ChatInputBar
@@ -151,17 +171,32 @@ export const Chat = () => {
 export const ChatBlock = ({
   children,
   hideSeperator,
+  type,
 }: {
+  type: chatEntities;
   children: JSX.Element | JSX.Element[];
   hideSeperator?: boolean;
 }) => {
+  let profile_src = '';
+  switch (type) {
+    case chatEntities.HUMAN:
+      profile_src = HUMAN_PROFILE_IMAGE;
+      break;
+
+    case chatEntities.AI:
+      profile_src = AI_PROFILE_IMAGE;
+      break;
+
+    default:
+      throw console.error('Invalid chat entity type');
+  }
   return (
     <div className="flex w-full flex-col items-center leading-8">
       <div className="flex w-full justify-center gap-5 px-16 py-5">
         <img
-          src="https://i.guim.co.uk/img/media/699cce4914b90ae0ba89787178bc48314d50eb89/0_215_5081_3048/master/5081.jpg?width=1200&height=1200&quality=85&auto=format&fit=crop&s=20e357d35de3b2adeb09c3b400520d39"
-          alt=""
-          className="h-12 w-12 rounded-full"
+          src={profile_src}
+          alt="Profile picture"
+          className="h-12 w-12 rounded-full object-cover"
         />
         <div className="flex w-full flex-grow flex-col">{children}</div>
       </div>
@@ -188,7 +223,7 @@ const Content = ({
   }
   return (
     <SyntaxHighlighter
-      className="w-[100%] max-w-[1200px]"
+      className="w-[100%] max-w-[1200px] flex-shrink"
       language={language}
       style={atomDark}
     >
