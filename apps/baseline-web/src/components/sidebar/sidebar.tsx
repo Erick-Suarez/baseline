@@ -1,6 +1,6 @@
 import { NavMenu } from '@components/sidebar/navMenu';
-import { Link, useRoute } from 'wouter';
-
+import { Link } from 'wouter';
+import { HUMAN_PROFILE_IMAGE } from '@utils/images';
 const _bottomSection = (
   <div className="flex flex-col items-center gap-5">
     <Link href="/settings">
@@ -13,14 +13,14 @@ const _bottomSection = (
 export const Sidebar = () => {
   return (
     <div className="flex h-full w-[250px] flex-col items-center justify-between border-r border-slate-200 px-3 py-10">
-      <div className="mb-20 flex w-full flex-col items-center justify-center gap-2">
+      <div className="mb-20 flex w-full flex-col items-center justify-center">
         <img
-          src="https://i.guim.co.uk/img/media/699cce4914b90ae0ba89787178bc48314d50eb89/0_215_5081_3048/master/5081.jpg?width=1200&height=1200&quality=85&auto=format&fit=crop&s=20e357d35de3b2adeb09c3b400520d39"
+          src={HUMAN_PROFILE_IMAGE}
           alt="Profile photo"
-          className="h-[auto] w-[50%] rounded-full"
+          className="mb-5 h-32 w-32 rounded-full object-cover"
         />
-        <h1 className="text-2xl font-bold">Santiago Uriarte</h1>
-        <h2 className="text-lg text-slate-600">Baseline Company</h2>
+        <h1 className="mb-1 text-xl font-bold">Magnus Cashington</h1>
+        <h2 className="text-md text-slate-600">Baseline Company</h2>
       </div>
       <NavMenu />
       {_bottomSection}

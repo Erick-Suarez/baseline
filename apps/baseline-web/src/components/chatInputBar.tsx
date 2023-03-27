@@ -1,5 +1,6 @@
 import { RiSendPlane2Fill } from 'react-icons/ri';
-
+import BeatLoader from 'react-spinners/BeatLoader';
+import { useState } from 'react';
 export const ChatInputBar = ({
   value,
   handleChange,
@@ -13,6 +14,8 @@ export const ChatInputBar = ({
       | React.KeyboardEvent<HTMLInputElement>
   ) => void;
 }) => {
+  const [loading, setLoading] = useState(false);
+
   return (
     <div className="group flex w-full items-center justify-between rounded-xl border border-slate-400 px-5 py-3 hover:border-slate-800 focus:border-slate-800">
       <input
@@ -25,16 +28,27 @@ export const ChatInputBar = ({
         }}
         onKeyDown={(e) => {
           if (e.key === 'Enter') {
-            handleSubmit(e);
+            setLoading(true);
+            setTimeout(() => {
+              setLoading(false);
+              handleSubmit(e);
+            }, 1000);
           }
         }}
       />
       <button
         onClick={(e) => {
-          handleSubmit(e);
+          setLoading(true);
+          setTimeout(() => {
+            setLoading(false);
+            handleSubmit(e);
+          }, 1000);
         }}
       >
-        <RiSendPlane2Fill className="h-6 w-6 text-slate-400 hover:text-indigo-600" />
+        {loading && <BeatLoader loading={loading} size={12} color="#818cf8" />}
+        {!loading && (
+          <RiSendPlane2Fill className="h-6 w-6 text-slate-400 hover:text-indigo-600" />
+        )}
       </button>
     </div>
   );
