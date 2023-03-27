@@ -52,19 +52,20 @@ io.on('connection', socket => {
   console.log('a user connected');
 
   io.emit('hello', { data: 'hello world' });
-  socket.on('query-request', (data: query) => {
+  socket.on('query-request', async (data: query) => {
     console.log('Query request received');
     console.log(data);
-
-    askQuestions(data.query)
-      .then(result => {
-        console.log(result);
-
-        io.emit('query-response', { result });
-      })
-      .catch(err => {
-        console.error(err);
-      });
+    try {
+      const queryResponse = await askQuestions(data.query);
+      for (const response of queryResponse) {
+        console.log(`emiting ${JSON.stringify(response)}`);
+        await new Promise(resolve => {
+          io.emit('query-response', response, resolve);
+        });
+      }
+    } catch (err) {
+      console.error(err);
+    }
   });
 });
 

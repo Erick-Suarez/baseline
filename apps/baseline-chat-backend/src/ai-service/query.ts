@@ -113,7 +113,26 @@ async function custom_call(query: string) {
   return qaRes;
 }
 
+function splitIntoBlocks(content: string) {
+  let count = 0;
+  const types = ['text', 'code'];
+  const result: { type: string; content: string }[] = [];
+  console.log(content);
+  for (const block of content.split('```')) {
+    const content = block.trim();
+    if (content !== '') {
+      result.push({
+        type: types[count % 2],
+        content: block.trim(),
+      });
+    }
+    count += 1;
+  }
+
+  return result;
+}
+
 export async function askQuestions(question: string) {
   const response = await custom_call(question);
-  return response.text;
+  return splitIntoBlocks(response.text);
 }

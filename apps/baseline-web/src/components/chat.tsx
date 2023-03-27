@@ -99,7 +99,7 @@ export const Chat = () => {
       const updatedChatDataList = [
         {
           type: entryTypes.AI,
-          data: [{ type: 'text', data: data.result }],
+          data: [{ type: data.type, data: data.content }],
         },
         ...chatEntryList,
       ] as chatEntry[];
