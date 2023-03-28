@@ -91,8 +91,6 @@ async function custom_call(query: string) {
     chat_history: chatHistory,
   });
 
-  console.log("\n---\n" + historySummaryChainRes.text + "\n---\n");
-
   const related_docs = await vectorStore.similaritySearch(
     historySummaryChainRes.text,
     3
@@ -103,6 +101,12 @@ async function custom_call(query: string) {
       return document.pageContent;
     })
     .join("\n");
+
+  console.log(
+    `Chat History: ${JSON.stringify(
+      chatHistory
+    )}\nQuery with History: ${JSON.stringify(historySummaryChainRes)}`
+  );
 
   const qaRes = await QAchain.call({
     chat_history: chatHistory,
@@ -145,4 +149,9 @@ export async function askQuestions(
 ): Promise<ResponseContent[]> {
   const response = await custom_call(question);
   return splitIntoBlocks(response.text);
+}
+
+export function resetChatHistory() {
+  chatHistory.length = 0;
+  return chatHistory;
 }

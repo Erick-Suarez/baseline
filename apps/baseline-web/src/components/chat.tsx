@@ -45,7 +45,7 @@ export const Chat = () => {
 
   const chatBoxEnd = useRef(null);
 
-  function _handleResetChat() {
+  async function _handleResetChat() {
     setChatEntryList([
       {
         type: ChatEntryTypes.AI,
@@ -57,8 +57,10 @@ export const Chat = () => {
         ],
       },
     ]);
-
     setInputValue('');
+    await fetch('http://localhost:3000/reset-chat-history', {
+      method: 'POST',
+    });
     setWaitingForResponse(false);
   }
 

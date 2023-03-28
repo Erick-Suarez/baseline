@@ -6,18 +6,11 @@
     "apps/*"
   ],
   "devDependencies": {
-    "@typescript-eslint/eslint-plugin": "^5.56.0",
-    "@typescript-eslint/parser": "^5.56.0",
-    "eslint": "^8.36.0",
-    "eslint-config-prettier": "^8.8.0",
-    "eslint-plugin-prettier": "^4.2.1",
-    "husky": "^8.0.3",
-    "lerna": "^6.6.1",
-    "lint-staged": "^13.1.4",
-    "prettier": "^2.8.6"
+    "concurrently": "^7.6.0",
+    "lerna": "^6.6.1"
   },
   "scripts": {
-    "prepare": "husky install",
+    "dev": "concurrently \"cd apps/baseline-chat-backend && npm run dev\" \"cd apps/baseline-web && npm run dev\"",
     "dev-server": "cd apps/baseline-chat-backend && npm run dev",
     "dev-web": "cd apps/baseline-web && npm run dev",
     "build-packages": "cd packages/shared && npm run build"

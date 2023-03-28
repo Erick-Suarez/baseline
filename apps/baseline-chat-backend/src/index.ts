@@ -1,5 +1,5 @@
 import express, { Express, Request, Response, NextFunction } from "express";
-import { askQuestions } from "./ai-service/query.js";
+import { askQuestions, resetChatHistory } from "./ai-service/query.js";
 import * as dotenv from "dotenv";
 import morganMiddleware from "./config/morganMiddleware.js";
 import http from "http";
@@ -22,6 +22,10 @@ app.use(cors());
 
 app.get("/", (req: Request, res: Response) => {
   res.json({ status: "OK" });
+});
+
+app.post("/reset-chat-history", (req: Request, res: Response) => {
+  res.json({ chatHistory: resetChatHistory() });
 });
 
 // error handler
