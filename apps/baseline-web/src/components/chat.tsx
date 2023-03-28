@@ -7,18 +7,21 @@ import { useState, useRef, useEffect } from 'react';
 import { HUMAN_PROFILE_IMAGE, AI_PROFILE_IMAGE } from '@utils/images';
 import { io, Socket } from 'socket.io-client';
 import BeatLoader from 'react-spinners/BeatLoader';
+import {
+  ServerAIQueryResponse,
+  ResponseContent,
+  ResponseContentTypes as ChatEntryContentType,
+  ServerAIQueryRequest,
+} from '@baselinedocs/shared';
 
-interface content {
-  type: 'text' | 'javascript';
-  data: string;
+type ChatEntryContent = ResponseContent;
+
+interface ChatEntry {
+  type: ChatEntryTypes;
+  data: ChatEntryContent[];
 }
 
-interface chatEntry {
-  type: entryTypes;
-  data: content[];
-}
-
-enum entryTypes {
+enum ChatEntryTypes {
   HUMAN = 'human',
   AI = 'ai',
   LOADING = 'loading',
@@ -26,12 +29,12 @@ enum entryTypes {
 
 export const Chat = () => {
   const [socketConnection, setSocketConnection] = useState<Socket | null>(null);
-  const [chatEntryList, setChatEntryList] = useState<chatEntry[]>([
+  const [chatEntryList, setChatEntryList] = useState<ChatEntry[]>([
     {
-      type: entryTypes.AI,
+      type: ChatEntryTypes.AI,
       data: [
         {
-          type: 'text',
+          type: ChatEntryContentType.TEXT,
           data: 'Hey I am Baseline AI! Type something to get started',
         },
       ],
@@ -45,10 +48,10 @@ export const Chat = () => {
   function _handleResetChat() {
     setChatEntryList([
       {
-        type: entryTypes.AI,
+        type: ChatEntryTypes.AI,
         data: [
           {
-            type: 'text',
+            type: ChatEntryContentType.TEXT,
             data: 'Hey I am Baseline AI! Type something to get started',
           },
         ],
@@ -59,21 +62,23 @@ export const Chat = () => {
     setWaitingForResponse(false);
   }
 
-  function _addNewEntryToChatDataList(entry: chatEntry) {
-    const updatedChatDataList = [entry, ...chatEntryList] as chatEntry[];
+  function _addNewEntryToChatDataList(entry: ChatEntry) {
+    const updatedChatDataList = [entry, ...chatEntryList] as ChatEntry[];
 
     setChatEntryList(updatedChatDataList);
   }
 
   function _handleSubmit() {
     if (inputValue.length > 0) {
-      const newHumanEntry: chatEntry = {
-        type: entryTypes.HUMAN,
-        data: [{ type: 'text', data: inputValue }],
+      const newHumanEntry: ChatEntry = {
+        type: ChatEntryTypes.HUMAN,
+        data: [{ type: ChatEntryContentType.TEXT, data: inputValue }],
       };
 
+      const queryRequest: ServerAIQueryRequest = { query: inputValue };
+
       if (socketConnection) {
-        socketConnection.emit('query-request', { query: inputValue });
+        socketConnection.emit('query-request', queryRequest);
       }
 
       _addNewEntryToChatDataList(newHumanEntry);
@@ -92,17 +97,14 @@ export const Chat = () => {
 
     setSocketConnection(socket);
 
-    socket.on('query-response', (data) => {
-      console.log(data);
-      console.log(chatEntryList);
-
+    socket.on('query-response', (data: ServerAIQueryResponse) => {
       const updatedChatDataList = [
         {
-          type: entryTypes.AI,
-          data: [{ type: data.type, data: data.content }],
+          type: ChatEntryTypes.AI,
+          data: [...data.response],
         },
         ...chatEntryList,
-      ] as chatEntry[];
+      ] as ChatEntry[];
 
       setChatEntryList(updatedChatDataList);
       setWaitingForResponse(false);
@@ -133,7 +135,7 @@ export const Chat = () => {
       <div className="mb-5 h-full w-full overflow-clip rounded-xl shadow-lg">
         <div className="flex h-full w-full flex-col-reverse overflow-y-auto pt-5">
           <div ref={chatBoxEnd} />
-          {waitingForResponse && <ChatBlock type={entryTypes.LOADING} />}
+          {waitingForResponse && <ChatBlock type={ChatEntryTypes.LOADING} />}
           {chatEntryList.reverse().map((chatData, index) => {
             const chatBlockId = `chatBlock_${index}`;
             return (
@@ -174,7 +176,7 @@ export const ChatBlock = ({
   hideSeperator,
   type,
 }: {
-  type: entryTypes;
+  type: ChatEntryTypes;
   children?: JSX.Element | JSX.Element[];
   hideSeperator?: boolean;
 }) => {
@@ -183,15 +185,15 @@ export const ChatBlock = ({
 
   let profile_src = '';
   switch (type) {
-    case entryTypes.HUMAN:
+    case ChatEntryTypes.HUMAN:
       profile_src = HUMAN_PROFILE_IMAGE;
       break;
 
-    case entryTypes.AI:
+    case ChatEntryTypes.AI:
       profile_src = AI_PROFILE_IMAGE;
       break;
 
-    case entryTypes.LOADING:
+    case ChatEntryTypes.LOADING:
       profile_src = AI_PROFILE_IMAGE;
       children = (
         <div>

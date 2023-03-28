@@ -1,12 +1,14 @@
-import { ChatOpenAI } from 'langchain/chat_models';
-import { LLMChain } from 'langchain/chains';
-import { OpenAIEmbeddings } from 'langchain/embeddings';
-import { PineconeClient } from '@pinecone-database/pinecone';
-import { PineconeStore } from 'langchain/vectorstores';
-import { CallbackManager } from 'langchain/callbacks';
+import { ChatOpenAI } from "langchain/chat_models";
+import { LLMChain } from "langchain/chains";
+import { OpenAIEmbeddings } from "langchain/embeddings";
+import { PineconeClient } from "@pinecone-database/pinecone";
+import { PineconeStore } from "langchain/vectorstores";
+import { CallbackManager } from "langchain/callbacks";
 
-import { PromptTemplate } from 'langchain/prompts';
-import * as dotenv from 'dotenv';
+import { PromptTemplate } from "langchain/prompts";
+import * as dotenv from "dotenv";
+import { QueryResponse } from "@pinecone-database/pinecone/dist/pinecone-generated-ts-fetch/index.js";
+import { ResponseContent, ResponseContentTypes } from "@baselinedocs/shared";
 dotenv.config();
 
 /* Initialize the vector DB */
@@ -19,7 +21,7 @@ await client.init({
 const pineconeIndex = client.Index(process.env.PINECONE_INDEX!);
 const vectorStore = await PineconeStore.fromExistingIndex(
   new OpenAIEmbeddings(),
-  { pineconeIndex },
+  { pineconeIndex }
 );
 
 /* Initialize Models */
@@ -52,7 +54,7 @@ Use the chat history to create a new query that has the same meaning as the inpu
 
 const historySummaryPrompt = new PromptTemplate({
   template: historySummaryPromptTemplate,
-  inputVariables: ['chat_history', 'query'],
+  inputVariables: ["chat_history", "query"],
 });
 
 const historySummaryChain = new LLMChain({
@@ -75,7 +77,7 @@ Try to use the context above, chat history, and knowledge you know to create a r
 
 const qaPrompt = new PromptTemplate({
   template: qaPromptTemplate,
-  inputVariables: ['chat_history', 'context', 'query'],
+  inputVariables: ["chat_history", "context", "query"],
 });
 
 const QAchain = new LLMChain({
@@ -89,18 +91,18 @@ async function custom_call(query: string) {
     chat_history: chatHistory,
   });
 
-  console.log('\n---\n' + historySummaryChainRes.text + '\n---\n');
+  console.log("\n---\n" + historySummaryChainRes.text + "\n---\n");
 
   const related_docs = await vectorStore.similaritySearch(
     historySummaryChainRes.text,
-    3,
+    3
   );
 
   const context = related_docs
-    .map(document => {
+    .map((document) => {
       return document.pageContent;
     })
-    .join('\n');
+    .join("\n");
 
   const qaRes = await QAchain.call({
     chat_history: chatHistory,
@@ -115,16 +117,22 @@ async function custom_call(query: string) {
 
 function splitIntoBlocks(content: string) {
   let count = 0;
-  const types = ['text', 'code'];
-  const result: { type: string; content: string }[] = [];
+  const types = ["text", "code"];
+  const result: ResponseContent[] = [];
   console.log(content);
-  for (const block of content.split('```')) {
+  for (const block of content.split("```")) {
     const content = block.trim();
-    if (content !== '') {
+    if (content !== "") {
+      let type;
+      if (count % 2 === 0) {
+        type = ResponseContentTypes.TEXT;
+      } else {
+        type = ResponseContentTypes.JAVASCRIPT;
+      }
       result.push({
-        type: types[count % 2],
-        content: block.trim(),
-      });
+        type: type,
+        data: block.trim(),
+      } as ResponseContent);
     }
     count += 1;
   }
@@ -132,7 +140,9 @@ function splitIntoBlocks(content: string) {
   return result;
 }
 
-export async function askQuestions(question: string) {
+export async function askQuestions(
+  question: string
+): Promise<ResponseContent[]> {
   const response = await custom_call(question);
   return splitIntoBlocks(response.text);
 }
