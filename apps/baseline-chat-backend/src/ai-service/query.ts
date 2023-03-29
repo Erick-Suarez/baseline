@@ -8,7 +8,11 @@ import { CallbackManager } from "langchain/callbacks";
 import { PromptTemplate } from "langchain/prompts";
 import * as dotenv from "dotenv";
 import { QueryResponse } from "@pinecone-database/pinecone/dist/pinecone-generated-ts-fetch/index.js";
-import { ResponseContent, ResponseContentTypes } from "@baselinedocs/shared";
+import {
+  ResponseContent,
+  ResponseContentTypes,
+  filepath,
+} from "@baselinedocs/shared";
 dotenv.config();
 
 /* Initialize the vector DB */
@@ -116,7 +120,10 @@ async function custom_call(query: string) {
 
   chatHistory.push(`human: ${query}\nAI: ${qaRes.text}`);
 
-  return qaRes;
+  const sources = related_docs.map((document) => {
+    return document.metadata.filepath;
+  });
+  return { answer: qaRes.text, sources };
 }
 
 function splitIntoBlocks(content: string) {
@@ -146,9 +153,12 @@ function splitIntoBlocks(content: string) {
 
 export async function askQuestions(
   question: string
-): Promise<ResponseContent[]> {
+): Promise<{ answer: ResponseContent[]; sources: filepath[] }> {
   const response = await custom_call(question);
-  return splitIntoBlocks(response.text);
+  return {
+    answer: splitIntoBlocks(response.answer),
+    sources: response.sources,
+  };
 }
 
 export function resetChatHistory() {

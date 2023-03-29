@@ -1,7 +1,7 @@
 import classNames from 'classnames';
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
 import { atomDark } from 'react-syntax-highlighter/dist/esm/styles/prism';
-import { RiRefreshLine } from 'react-icons/ri';
+import { RiRefreshLine, RiArrowDropDownLine } from 'react-icons/ri';
 import { ChatInputBar } from '@components/chatInputBar';
 import { useState, useRef, useEffect } from 'react';
 import { HUMAN_PROFILE_IMAGE, AI_PROFILE_IMAGE } from '@utils/images';
@@ -12,13 +12,16 @@ import {
   ResponseContent,
   ResponseContentTypes as ChatEntryContentType,
   ServerAIQueryRequest,
+  filepath,
 } from '@baselinedocs/shared';
+import { Disclosure } from '@headlessui/react';
 
 type ChatEntryContent = ResponseContent;
 
 interface ChatEntry {
   type: ChatEntryTypes;
   data: ChatEntryContent[];
+  sources?: filepath[];
 }
 
 enum ChatEntryTypes {
@@ -104,10 +107,10 @@ export const Chat = () => {
         {
           type: ChatEntryTypes.AI,
           data: [...data.response],
+          sources: [...data.sources],
         },
         ...chatEntryList,
       ] as ChatEntry[];
-
       setChatEntryList(updatedChatDataList);
       setWaitingForResponse(false);
     });
@@ -145,6 +148,7 @@ export const Chat = () => {
                 key={chatBlockId}
                 type={chatData.type}
                 hideSeperator={index === 0}
+                sources={chatData.sources}
               >
                 {chatData.data.map((content, index) => {
                   return (
@@ -177,10 +181,12 @@ export const ChatBlock = ({
   children,
   hideSeperator,
   type,
+  sources,
 }: {
   type: ChatEntryTypes;
   children?: JSX.Element | JSX.Element[];
   hideSeperator?: boolean;
+  sources?: filepath[];
 }) => {
   const [requestHasTimedOut, setRequestHasTimedOut] = useState<boolean>(false);
   const timeoutLimit = 20000;
@@ -226,7 +232,10 @@ export const ChatBlock = ({
           alt="Profile picture"
           className="h-12 w-12 rounded-full object-cover"
         />
-        <div className="flex w-full flex-grow flex-col">{children}</div>
+        <div className="flex w-full flex-grow flex-col">
+          {children}
+          {sources && <Sources sources={sources}></Sources>}
+        </div>
       </div>
 
       <div
@@ -235,6 +244,22 @@ export const ChatBlock = ({
         })}
       ></div>
     </div>
+  );
+};
+
+export const Sources = ({ sources }: { sources: filepath[] }) => {
+  return (
+    <Disclosure>
+      <Disclosure.Button className="flex w-full items-center justify-between rounded-lg bg-slate-200 px-4 py-2 hover:bg-slate-100">
+        Sources
+        <RiArrowDropDownLine className="h-6 w-6" />
+      </Disclosure.Button>
+      <Disclosure.Panel className="px-4 text-slate-600">
+        {sources.map((source) => {
+          return <p>{source}</p>;
+        })}
+      </Disclosure.Panel>
+    </Disclosure>
   );
 };
 
@@ -251,7 +276,7 @@ const Content = ({
   }
   return (
     <SyntaxHighlighter
-      className="w-[100%] max-w-[1200px] flex-shrink"
+      className="w-[100%] flex-shrink"
       language={language}
       style={atomDark}
     >

@@ -50,9 +50,11 @@ io.on("connection", (socket) => {
     console.log("Query request received");
     console.log(data);
     try {
+      const response = await askQuestions(data.query);
       const queryResponse: ServerAIQueryResponse = {
         original_query: data.query,
-        response: await askQuestions(data.query),
+        response: response.answer,
+        sources: response.sources,
       };
       io.emit("query-response", queryResponse);
     } catch (err) {

@@ -13,6 +13,6 @@
     "dev": "concurrently \"cd apps/baseline-chat-backend && npm run dev\" \"cd apps/baseline-web && npm run dev\"",
     "dev-server": "cd apps/baseline-chat-backend && npm run dev",
     "dev-web": "cd apps/baseline-web && npm run dev",
-    "build-packages": "cd packages/shared && npm run build"
+    "build": "npx lerna run build"
   }
 }
