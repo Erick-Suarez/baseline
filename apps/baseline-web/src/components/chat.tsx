@@ -191,7 +191,7 @@ export const ChatBlock = ({
   sources?: filepath[];
 }) => {
   const [requestHasTimedOut, setRequestHasTimedOut] = useState<boolean>(false);
-  const timeoutLimit = 20000;
+  const timeoutLimit = 30000;
 
   let profile_src = '';
   switch (type) {
@@ -241,7 +241,7 @@ export const ChatBlock = ({
       </div>
 
       <div
-        className={classNames('w-[60%] border-b-2 border-slate-300', {
+        className={classNames('w-[60%] border-b border-slate-200', {
           hidden: hideSeperator,
         })}
       ></div>
@@ -281,6 +281,8 @@ const Content = ({
       className="w-[100%] flex-shrink"
       language={language}
       style={atomDark}
+      wrapLines={true}
+      showLineNumbers={true}
     >
       {content}
     </SyntaxHighlighter>

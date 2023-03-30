@@ -4,7 +4,7 @@ import { OpenAIEmbeddings } from "langchain/embeddings";
 import { PineconeClient } from "@pinecone-database/pinecone";
 import { PineconeStore } from "langchain/vectorstores";
 import { CallbackManager } from "langchain/callbacks";
-
+import chalk from "chalk";
 import { PromptTemplate } from "langchain/prompts";
 import * as dotenv from "dotenv";
 import { QueryResponse } from "@pinecone-database/pinecone/dist/pinecone-generated-ts-fetch/index.js";
@@ -34,7 +34,7 @@ const chatHistory: Array<string> = [];
 
 const chatModel = new ChatOpenAI({
   openAIApiKey: process.env.OPEN_AI_KEY,
-  temperature: 0.4,
+  temperature: 0.1,
   // streaming: true,
   // callbackManager: CallbackManager.fromHandlers({
   //   async handleLLMNewToken(token) {
@@ -105,18 +105,48 @@ async function custom_call(query: string) {
     historySummaryChainRes.text,
     4
   );
+  console.log(
+    chalk.blue(`
+  ===
+  Query
+  
+  ${query}
+  ===
+  `)
+  );
+  console.log(
+    chalk.green(`
+  ===
+  Chat History
+  
+  ${JSON.stringify(chatHistory)}
+  ===`)
+  );
+  console.log(
+    chalk.yellow(`
+    ===
+    New summation query using history
+    
+    ${historySummaryChainRes.text}
+    ===
+    `)
+  );
 
   const context = related_docs
     .map((document) => {
+      console.log(
+        chalk.cyanBright(`
+      ===
+      DOC
+
+      ${document.pageContent}
+      ===
+      
+     `)
+      );
       return document.pageContent;
     })
     .join("\n");
-
-  console.log(
-    `Chat History: ${JSON.stringify(
-      chatHistory
-    )}\nQuery with History: ${JSON.stringify(historySummaryChainRes)}`
-  );
 
   const qaRes = await QAchain.call({
     chat_history: chatHistory,
@@ -129,6 +159,15 @@ async function custom_call(query: string) {
   const sources = related_docs.map((document) => {
     return document.metadata.filepath;
   });
+
+  console.log(
+    chalk.magenta(`
+  ===
+  Response
+  
+  ${qaRes.text}
+  ===`)
+  );
   return { answer: qaRes.text, sources };
 }
 
@@ -136,7 +175,6 @@ function splitIntoBlocks(content: string) {
   let count = 0;
   const types = ["text", "code"];
   const result: ResponseContent[] = [];
-  console.log(content);
   for (const block of content.split("```")) {
     const content = block.trim();
     if (content !== "") {
