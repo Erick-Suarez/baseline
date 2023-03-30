@@ -137,17 +137,19 @@ export const Chat = () => {
           </h1>
         </button>
       </div>
-      <div className="mb-5 h-full w-full overflow-clip rounded-xl shadow-lg">
+      <div className="mb-5 h-full w-full overflow-clip rounded-xl border border-slate-300 shadow-xl">
         <div className="flex h-full w-full flex-col-reverse overflow-y-auto pt-5">
           <div ref={chatBoxEnd} />
-          {waitingForResponse && <ChatBlock type={ChatEntryTypes.LOADING} />}
+          {waitingForResponse && (
+            <ChatBlock type={ChatEntryTypes.LOADING} hideSeperator={true} />
+          )}
           {chatEntryList.reverse().map((chatData, index) => {
             const chatBlockId = `chatBlock_${index}`;
             return (
               <ChatBlock
                 key={chatBlockId}
                 type={chatData.type}
-                hideSeperator={index === 0}
+                hideSeperator={index === 0 && !waitingForResponse}
                 sources={chatData.sources}
               >
                 {chatData.data.map((content, index) => {
@@ -239,7 +241,7 @@ export const ChatBlock = ({
       </div>
 
       <div
-        className={classNames('w-[60%] border-b-2', {
+        className={classNames('w-[60%] border-b-2 border-slate-300', {
           hidden: hideSeperator,
         })}
       ></div>

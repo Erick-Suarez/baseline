@@ -12,7 +12,7 @@ const _bottomSection = (
 
 export const Sidebar = () => {
   return (
-    <div className="flex h-full w-[250px] flex-col items-center justify-between border-r border-slate-200 px-3 py-10">
+    <div className="flex h-full w-[250px] flex-col items-center justify-between border-r border-slate-300 px-3 py-10">
       <div className="mb-20 flex w-full flex-col items-center justify-center">
         <img
           src={HUMAN_PROFILE_IMAGE}

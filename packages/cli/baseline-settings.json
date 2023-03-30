@@ -1,0 +1,7 @@
+
+  {
+    "include": ["."],
+    "exclude": [".git", ".vscode", "node_modules", "dist"],
+    "fileTypes": [".js", ".jsx", ".ts", ".tsx"]
+  }
+  

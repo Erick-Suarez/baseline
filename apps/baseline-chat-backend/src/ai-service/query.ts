@@ -80,6 +80,7 @@ Try to use the context above, chat history, and knowledge you know to create a r
 Try to give a code example if possible
 in the form 
 \`\`\`
+<filepath of file to be edited>
 <Example code>
 \`\`\`
 `;
