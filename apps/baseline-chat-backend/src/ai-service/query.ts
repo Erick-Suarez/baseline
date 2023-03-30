@@ -34,7 +34,7 @@ const chatHistory: Array<string> = [];
 
 const chatModel = new ChatOpenAI({
   openAIApiKey: process.env.OPEN_AI_KEY,
-  temperature: 0.1,
+  temperature: 0.4,
   // streaming: true,
   // callbackManager: CallbackManager.fromHandlers({
   //   async handleLLMNewToken(token) {
@@ -77,6 +77,11 @@ Context:
 {context}
 ---
 Try to use the context above, chat history, and knowledge you know to create a response to this statement: {query}
+Try to give a code example if possible
+in the form 
+\`\`\`
+<Example code>
+\`\`\`
 `;
 
 const qaPrompt = new PromptTemplate({
@@ -97,7 +102,7 @@ async function custom_call(query: string) {
 
   const related_docs = await vectorStore.similaritySearch(
     historySummaryChainRes.text,
-    3
+    4
   );
 
   const context = related_docs
