@@ -1,5 +1,5 @@
 import express, { Express, Request, Response, NextFunction } from "express";
-import { askQuestions, resetChatHistory } from "./ai-service/query.js";
+import { BaselineChatQAModel } from "./ai-service/query.js";
 import * as dotenv from "dotenv";
 import morganMiddleware from "./config/morganMiddleware.js";
 import http from "http";
@@ -9,6 +9,7 @@ import {
   ServerAIQueryResponse,
   ServerAIQueryRequest,
 } from "@baselinedocs/shared";
+import chalk from "chalk";
 
 dotenv.config();
 const port = 3000;
@@ -24,10 +25,6 @@ app.get("/", (req: Request, res: Response) => {
   res.json({ status: "OK" });
 });
 
-app.post("/reset-chat-history", (req: Request, res: Response) => {
-  res.json({ chatHistory: resetChatHistory() });
-});
-
 // error handler
 app.use(function (err: any, req: Request, res: Response, next: NextFunction) {
   // set locals, only providing error in development
@@ -41,25 +38,38 @@ app.use(function (err: any, req: Request, res: Response, next: NextFunction) {
 const server = http.createServer(app);
 const io = new Server(server, { cors: { origin: "http://localhost:5173" } });
 
-// TODO: Allow for multiple instances by implementing some cookie or auth
 io.on("connection", (socket) => {
-  console.log("a user connected");
+  console.log(`New client connection: ${socket.id}`);
 
-  io.emit("hello", { data: "hello world" });
+  const baselineQAModel = new BaselineChatQAModel();
+
   socket.on("query-request", async (data: ServerAIQueryRequest) => {
-    console.log("Query request received");
-    console.log(data);
+    console.log(
+      `Query request received for client ${socket.id}: ${data.query}`
+    );
     try {
-      const response = await askQuestions(data.query);
+      const ModelResponse = await baselineQAModel.query(data.query);
+
       const queryResponse: ServerAIQueryResponse = {
         original_query: data.query,
-        response: response.answer,
-        sources: response.sources,
+        response: ModelResponse.response,
+        sources: ModelResponse.sources,
       };
-      io.emit("query-response", queryResponse);
+
+      console.log(`Emitting query response for ${socket.id}`);
+      socket.emit("query-response", queryResponse);
     } catch (err) {
       console.error(err);
     }
+  });
+
+  socket.on("reset-chat", () => {
+    console.log(`Reset chat request received for client ${socket.id}`);
+    baselineQAModel.resetChatHistory();
+  });
+
+  socket.on("disconnect", (reason) => {
+    console.log(chalk.green(`${socket.id} disconnected because: ${reason}`));
   });
 });
 

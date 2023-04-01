@@ -61,9 +61,7 @@ export const Chat = () => {
       },
     ]);
     setInputValue('');
-    await fetch('http://localhost:3000/reset-chat-history', {
-      method: 'POST',
-    });
+    socketConnection?.emit('reset-chat');
     setWaitingForResponse(false);
   }
 
@@ -102,7 +100,13 @@ export const Chat = () => {
 
     setSocketConnection(socket);
 
-    socket.on('query-response', (data: ServerAIQueryResponse) => {
+    return () => {
+      socket.close();
+    };
+  }, []);
+
+  useEffect(() => {
+    socketConnection?.on('query-response', (data: ServerAIQueryResponse) => {
       const updatedChatDataList = [
         {
           type: ChatEntryTypes.AI,
@@ -115,12 +119,6 @@ export const Chat = () => {
       setWaitingForResponse(false);
     });
 
-    return () => {
-      socket.close();
-    };
-  }, [chatEntryList]);
-
-  useEffect(() => {
     _scrollToBottom();
   }, [chatEntryList]);
 

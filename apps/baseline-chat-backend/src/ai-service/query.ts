@@ -13,37 +13,13 @@ import {
   ResponseContentTypes,
   filepath,
 } from "@baselinedocs/shared";
+import { BaseLanguageModel } from "langchain/base_language";
+import { ChainValues } from "langchain/schema";
+import { Document } from "langchain/document";
+
 dotenv.config();
 
-/* Initialize the vector DB */
-const client = new PineconeClient();
-
-await client.init({
-  apiKey: process.env.PINECONE_API_KEY!,
-  environment: process.env.PINECONE_ENVIRONMENT!,
-});
-const pineconeIndex = client.Index(process.env.PINECONE_INDEX!);
-const vectorStore = await PineconeStore.fromExistingIndex(
-  new OpenAIEmbeddings(),
-  { pineconeIndex }
-);
-
-/* Initialize Models */
-
-const chatHistory: Array<string> = [];
-
-const chatModel = new ChatOpenAI({
-  openAIApiKey: process.env.OPEN_AI_KEY,
-  temperature: 0.1,
-  // streaming: true,
-  // callbackManager: CallbackManager.fromHandlers({
-  //   async handleLLMNewToken(token) {
-  //     process.stdout.write(token);
-  //   },
-  // }),
-});
-
-const historySummaryPromptTemplate = `
+const DefaultSummationPrompt = `
 ---
 Chat History:
 
@@ -56,17 +32,7 @@ Use the chat history to create a new query that has the same meaning as the inpu
 
  `;
 
-const historySummaryPrompt = new PromptTemplate({
-  template: historySummaryPromptTemplate,
-  inputVariables: ["chat_history", "query"],
-});
-
-const historySummaryChain = new LLMChain({
-  llm: chatModel,
-  prompt: historySummaryPrompt,
-});
-
-const qaPromptTemplate = `
+const DefaultQAPrompt = `
 ---
 Chat History:
 
@@ -85,127 +51,149 @@ in the form
 \`\`\`
 `;
 
-const qaPrompt = new PromptTemplate({
-  template: qaPromptTemplate,
-  inputVariables: ["chat_history", "context", "query"],
-});
+interface BaselineChatQAModelConfig {}
 
-const QAchain = new LLMChain({
-  llm: chatModel,
-  prompt: qaPrompt,
-});
+export class BaselineChatQAModel {
+  private QAchain: LLMChain;
+  private summationChain: LLMChain;
+  private chatHistory: Array<string>;
 
-async function custom_call(query: string) {
-  const historySummaryChainRes = await historySummaryChain.call({
-    query: query,
-    chat_history: chatHistory,
-  });
-
-  const related_docs = await vectorStore.similaritySearch(
-    historySummaryChainRes.text,
-    4
-  );
-  console.log(
-    chalk.blue(`
-  ===
-  Query
-  
-  ${query}
-  ===
-  `)
-  );
-  console.log(
-    chalk.green(`
-  ===
-  Chat History
-  
-  ${JSON.stringify(chatHistory)}
-  ===`)
-  );
-  console.log(
-    chalk.yellow(`
-    ===
-    New summation query using history
-    
-    ${historySummaryChainRes.text}
-    ===
-    `)
-  );
-
-  const context = related_docs
-    .map((document) => {
-      console.log(
-        chalk.cyanBright(`
-      ===
-      DOC
-
-      ${document.pageContent}
-      ===
-      
-     `)
-      );
-      return document.pageContent;
-    })
-    .join("\n");
-
-  const qaRes = await QAchain.call({
-    chat_history: chatHistory,
-    context: context,
-    query: `${historySummaryChainRes.text}\n${query}`,
-  });
-
-  chatHistory.push(`human: ${query}\nAI: ${qaRes.text}`);
-
-  const sources = related_docs.map((document) => {
-    return document.metadata.filepath;
-  });
-
-  console.log(
-    chalk.magenta(`
-  ===
-  Response
-  
-  ${qaRes.text}
-  ===`)
-  );
-  return { answer: qaRes.text, sources };
-}
-
-function splitIntoBlocks(content: string) {
-  let count = 0;
-  const types = ["text", "code"];
-  const result: ResponseContent[] = [];
-  for (const block of content.split("```")) {
-    const content = block.trim();
-    if (content !== "") {
-      let type;
-      if (count % 2 === 0) {
-        type = ResponseContentTypes.TEXT;
-      } else {
-        type = ResponseContentTypes.JAVASCRIPT;
-      }
-      result.push({
-        type: type,
-        data: block.trim(),
-      } as ResponseContent);
-    }
-    count += 1;
+  constructor() {
+    this.QAchain = this._initializeDefaultChatQAChain();
+    this.summationChain = this._initializeDefaultSummationChain();
+    this.chatHistory = [];
   }
 
-  return result;
+  async query(query: string) {
+    /* Summarize chat history and query into new question */
+    const summarizedQuery = await this._summarizeChatHistoryAndQuery(query);
+
+    /* Get n related embeddings for the question */
+    const relatedEmbeddings = await this._getRelatedEmbeddingsForQuery(
+      summarizedQuery.text,
+      4
+    );
+
+    /* Create context string from embeddings */
+    const context = relatedEmbeddings
+      .map((embedding) => embedding.pageContent)
+      .join("\n===\n");
+
+    /* Use context to answer original query */
+    const res = await this.QAchain.call({
+      chat_history: this.chatHistory,
+      context: context,
+      query: `${query}`,
+    });
+
+    /* Add response to chat hisory */
+    this._addToChatHistory(query, res.text);
+
+    return {
+      response: this._splitIntoBlocks(res.text),
+      sources: relatedEmbeddings.map(
+        (embedding) => embedding.metadata.filepath
+      ),
+    };
+  }
+
+  resetChatHistory() {
+    this.chatHistory = [];
+  }
+
+  private _addToChatHistory(query: string, response: string) {
+    this.chatHistory.push(`
+    Human: ${query}
+    
+    AI:${response}
+    `);
+  }
+
+  private async _summarizeChatHistoryAndQuery(
+    query: string
+  ): Promise<ChainValues> {
+    return await this.summationChain.call({
+      query: query,
+      chat_history: this.chatHistory,
+    });
+  }
+
+  private async _getRelatedEmbeddingsForQuery(
+    query: string,
+    embeddingsToReturn: number
+  ): Promise<Document[]> {
+    const client = new PineconeClient();
+
+    await client.init({
+      apiKey: process.env.PINECONE_API_KEY!,
+      environment: process.env.PINECONE_ENVIRONMENT!,
+    });
+
+    const pineconeIndex = client.Index(process.env.PINECONE_INDEX!);
+
+    const vectorStore = await PineconeStore.fromExistingIndex(
+      new OpenAIEmbeddings(),
+      { pineconeIndex }
+    );
+
+    return await vectorStore.similaritySearch(query, embeddingsToReturn);
+  }
+
+  private _splitIntoBlocks(content: string) {
+    let count = 0;
+    const types = ["text", "code"];
+    const result: ResponseContent[] = [];
+    for (const block of content.split("```")) {
+      const content = block.trim();
+      if (content !== "") {
+        let type;
+        if (count % 2 === 0) {
+          type = ResponseContentTypes.TEXT;
+        } else {
+          type = ResponseContentTypes.JAVASCRIPT;
+        }
+        result.push({
+          type: type,
+          data: block.trim(),
+        } as ResponseContent);
+      }
+      count += 1;
+    }
+
+    return result;
+  }
+
+  private _initializeDefaultSummationChain() {
+    const summationPrompt = new PromptTemplate({
+      template: DefaultSummationPrompt,
+      inputVariables: ["chat_history", "query"],
+    });
+
+    return new LLMChain({
+      llm: new ChatOpenAI({
+        openAIApiKey: process.env.OPEN_AI_KEY,
+        temperature: 0.1,
+      }),
+      prompt: summationPrompt,
+    });
+  }
+
+  private _initializeDefaultChatQAChain() {
+    const DefaultQAPromptTemplate = new PromptTemplate({
+      template: DefaultQAPrompt,
+      inputVariables: ["chat_history", "context", "query"],
+    });
+
+    return new LLMChain({
+      llm: new ChatOpenAI({
+        openAIApiKey: process.env.OPEN_AI_KEY,
+        temperature: 0.1,
+      }),
+      prompt: DefaultQAPromptTemplate,
+    });
+  }
 }
 
-export async function askQuestions(
-  question: string
-): Promise<{ answer: ResponseContent[]; sources: filepath[] }> {
-  const response = await custom_call(question);
-  return {
-    answer: splitIntoBlocks(response.answer),
-    sources: response.sources,
-  };
-}
+const m = new BaselineChatQAModel();
 
-export function resetChatHistory() {
-  chatHistory.length = 0;
-  return chatHistory;
-}
+m.query("How do I use styled components");
