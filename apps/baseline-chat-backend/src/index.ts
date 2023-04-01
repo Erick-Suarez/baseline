@@ -1,5 +1,5 @@
 import express, { Express, Request, Response, NextFunction } from "express";
-import { BaselineChatQAModel } from "./ai-service/query.js";
+import { BaselineChatQAModel } from "./lib/models/baselineQA.js";
 import * as dotenv from "dotenv";
 import morganMiddleware from "./config/morganMiddleware.js";
 import http from "http";
