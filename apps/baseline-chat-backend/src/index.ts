@@ -41,7 +41,11 @@ const io = new Server(server, { cors: { origin: "http://localhost:5173" } });
 io.on("connection", (socket) => {
   console.log(`New client connection: ${socket.id}`);
 
-  const baselineQAModel = new BaselineChatQAModel();
+  const newTokenHandler = (token: string) => {
+    socket.emit("query-response-stream-token", token);
+  };
+
+  const baselineQAModel = new BaselineChatQAModel({ newTokenHandler });
 
   socket.on("query-request", async (data: ServerAIQueryRequest) => {
     console.log(
@@ -56,8 +60,8 @@ io.on("connection", (socket) => {
         sources: ModelResponse.sources,
       };
 
-      console.log(`Emitting query response for ${socket.id}`);
-      socket.emit("query-response", queryResponse);
+      console.log("emitting done");
+      socket.emit("query-response-stream-finished", queryResponse);
     } catch (err) {
       console.error(err);
     }

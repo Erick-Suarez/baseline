@@ -1,99 +1,37 @@
-import classNames from 'classnames';
-import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
-import { atomDark } from 'react-syntax-highlighter/dist/esm/styles/prism';
-import { RiRefreshLine, RiArrowDropDownLine } from 'react-icons/ri';
+import { RiRefreshLine } from 'react-icons/ri';
 import { ChatInputBar } from '@components/chatInputBar';
 import { useState, useRef, useEffect } from 'react';
-import { HUMAN_PROFILE_IMAGE, AI_PROFILE_IMAGE } from '@utils/images';
+
 import { io, Socket } from 'socket.io-client';
-import BeatLoader from 'react-spinners/BeatLoader';
 import {
   ServerAIQueryResponse,
-  ResponseContent,
-  ResponseContentTypes as ChatEntryContentType,
   ServerAIQueryRequest,
   filepath,
+  MarkdownContent,
 } from '@baselinedocs/shared';
-import { Disclosure } from '@headlessui/react';
-
-type ChatEntryContent = ResponseContent;
+import { ChatBlock, ChatBlockType } from '@components/chatBlock';
 
 interface ChatEntry {
-  type: ChatEntryTypes;
-  data: ChatEntryContent[];
+  type: ChatBlockType;
+  data: MarkdownContent;
   sources?: filepath[];
 }
 
-enum ChatEntryTypes {
-  HUMAN = 'human',
-  AI = 'ai',
-  LOADING = 'loading',
-}
+const TIMEOUT_LIMIT = 30000;
 
 export const Chat = () => {
   const [socketConnection, setSocketConnection] = useState<Socket | null>(null);
-  const [chatEntryList, setChatEntryList] = useState<ChatEntry[]>([
+  const [chatBlockList, setChatBlockList] = useState<ChatEntry[]>([
     {
-      type: ChatEntryTypes.AI,
-      data: [
-        {
-          type: ChatEntryContentType.TEXT,
-          data: 'Hey I am Baseline AI! Type something to get started',
-        },
-      ],
+      type: ChatBlockType.AI,
+      data: 'Welcome to Baseline! Ask questions about your codebase to get started',
     },
   ]);
   const [inputValue, setInputValue] = useState<string>('');
   const [waitingForResponse, setWaitingForResponse] = useState<boolean>(false);
+  const [streamBuffer, setStreamBuffer] = useState<string[]>([]);
 
   const chatBoxEnd = useRef(null);
-
-  async function _handleResetChat() {
-    setChatEntryList([
-      {
-        type: ChatEntryTypes.AI,
-        data: [
-          {
-            type: ChatEntryContentType.TEXT,
-            data: 'Hey I am Baseline AI! Type something to get started',
-          },
-        ],
-      },
-    ]);
-    setInputValue('');
-    socketConnection?.emit('reset-chat');
-    setWaitingForResponse(false);
-  }
-
-  function _addNewEntryToChatDataList(entry: ChatEntry) {
-    const updatedChatDataList = [entry, ...chatEntryList] as ChatEntry[];
-
-    setChatEntryList(updatedChatDataList);
-  }
-
-  function _handleSubmit() {
-    if (inputValue.length > 0) {
-      const newHumanEntry: ChatEntry = {
-        type: ChatEntryTypes.HUMAN,
-        data: [{ type: ChatEntryContentType.TEXT, data: inputValue }],
-      };
-
-      const queryRequest: ServerAIQueryRequest = { query: inputValue };
-
-      if (socketConnection) {
-        socketConnection.emit('query-request', queryRequest);
-      }
-
-      _addNewEntryToChatDataList(newHumanEntry);
-      setInputValue('');
-      setWaitingForResponse(true);
-    }
-  }
-
-  function _scrollToBottom() {
-    //@ts-expect-error ScrollIntoView is set to null initially but will be assigned after first render
-    chatBoxEnd.current?.scrollIntoView({ behavior: 'smooth' });
-  }
 
   useEffect(() => {
     const socket = io('http://localhost:3000');
@@ -103,24 +41,66 @@ export const Chat = () => {
     return () => {
       socket.close();
     };
-  }, []);
+  }, [window]);
 
   useEffect(() => {
-    socketConnection?.on('query-response', (data: ServerAIQueryResponse) => {
-      const updatedChatDataList = [
-        {
-          type: ChatEntryTypes.AI,
-          data: [...data.response],
-          sources: [...data.sources],
-        },
-        ...chatEntryList,
-      ] as ChatEntry[];
-      setChatEntryList(updatedChatDataList);
-      setWaitingForResponse(false);
+    socketConnection?.on('query-response-stream-token', (token) => {
+      setStreamBuffer((streamBuffer) => [...streamBuffer, token]);
     });
 
+    socketConnection?.on(
+      'query-response-stream-finished',
+      (data: ServerAIQueryResponse) => {
+        setChatBlockList((chatBlockList) => [
+          ...chatBlockList,
+          {
+            type: ChatBlockType.AI,
+            data: data.response,
+            sources: data.sources,
+          },
+        ]);
+        setStreamBuffer([]);
+        setWaitingForResponse(false);
+      }
+    );
+
     _scrollToBottom();
-  }, [chatEntryList]);
+  }, [socketConnection]);
+
+  async function _handleResetChat() {
+    setChatBlockList([
+      {
+        type: ChatBlockType.AI,
+        data: 'Welcome to Baseline! Ask questions about your codebase to get started',
+      },
+    ]);
+    setInputValue('');
+    setStreamBuffer([]);
+    setWaitingForResponse(false);
+    socketConnection?.emit('reset-chat');
+  }
+
+  function _handleSubmit() {
+    if (inputValue.length > 0) {
+      const queryRequest: ServerAIQueryRequest = { query: inputValue };
+
+      if (socketConnection) {
+        setChatBlockList([
+          ...chatBlockList,
+          { type: ChatBlockType.HUMAN, data: queryRequest.query },
+        ]);
+        setWaitingForResponse(true);
+        socketConnection.emit('query-request', queryRequest);
+      }
+    }
+
+    setInputValue('');
+  }
+
+  function _scrollToBottom() {
+    //@ts-expect-error ScrollIntoView is set to null initially but will be assigned after first render
+    chatBoxEnd.current?.scrollIntoView({ behavior: 'smooth' });
+  }
 
   return (
     <div className="flex h-[95vh] max-h-[1080px] w-[80vw] max-w-[1440px] flex-col px-2">
@@ -137,34 +117,33 @@ export const Chat = () => {
       </div>
       <div className="mb-5 h-full w-full overflow-clip rounded-xl border border-slate-300 shadow-xl">
         <div className="flex h-full w-full flex-col-reverse overflow-y-auto pt-5">
-          <div ref={chatBoxEnd} />
           {waitingForResponse && (
-            <ChatBlock type={ChatEntryTypes.LOADING} hideSeperator={true} />
+            <ChatBlock
+              type={
+                streamBuffer.length > 0
+                  ? ChatBlockType.AI
+                  : ChatBlockType.LOADING
+              }
+              content={streamBuffer.join('')}
+            />
           )}
-          {chatEntryList.reverse().map((chatData, index) => {
-            const chatBlockId = `chatBlock_${index}`;
-            return (
-              <ChatBlock
-                key={chatBlockId}
-                type={chatData.type}
-                hideSeperator={index === 0 && !waitingForResponse}
-                sources={chatData.sources}
-              >
-                {chatData.data.map((content, index) => {
-                  return (
-                    <Content
-                      key={`${chatBlockId}_content_${index}`}
-                      content={content.data}
-                      language={content.type}
-                    />
-                  );
-                })}
-              </ChatBlock>
-            );
-          })}
+          {chatBlockList
+            .map((chatBlock, index) => {
+              return (
+                <ChatBlock
+                  key={`chat_block_${index}`}
+                  type={chatBlock.type}
+                  content={chatBlock.data}
+                  sources={chatBlock.sources}
+                />
+              );
+            })
+            .reverse()}
+          <div ref={chatBoxEnd} />
         </div>
       </div>
       <ChatInputBar
+        disabled={waitingForResponse}
         value={inputValue}
         handleChange={(e) => {
           setInputValue(e.target.value);
@@ -174,115 +153,5 @@ export const Chat = () => {
         }}
       />
     </div>
-  );
-};
-
-export const ChatBlock = ({
-  children,
-  hideSeperator,
-  type,
-  sources,
-}: {
-  type: ChatEntryTypes;
-  children?: JSX.Element | JSX.Element[];
-  hideSeperator?: boolean;
-  sources?: filepath[];
-}) => {
-  const [requestHasTimedOut, setRequestHasTimedOut] = useState<boolean>(false);
-  const timeoutLimit = 30000;
-
-  let profile_src = '';
-  switch (type) {
-    case ChatEntryTypes.HUMAN:
-      profile_src = HUMAN_PROFILE_IMAGE;
-      break;
-
-    case ChatEntryTypes.AI:
-      profile_src = AI_PROFILE_IMAGE;
-      break;
-
-    case ChatEntryTypes.LOADING:
-      profile_src = AI_PROFILE_IMAGE;
-      children = (
-        <div>
-          {!requestHasTimedOut && <BeatLoader size={12} color={'#818cf8'} />}
-          {requestHasTimedOut && (
-            <p className="font-semibold text-red-500">
-              Request has timed out. Server might be down or you may need to
-              reset chat and try again.
-            </p>
-          )}
-        </div>
-      );
-      if (!requestHasTimedOut) {
-        setTimeout(() => {
-          setRequestHasTimedOut(true);
-        }, timeoutLimit);
-      }
-      break;
-
-    default:
-      throw console.error('Invalid chat entity type');
-  }
-  return (
-    <div className="flex w-full flex-col items-center leading-8">
-      <div className="flex w-full justify-center gap-5 px-16 py-5">
-        <img
-          src={profile_src}
-          alt="Profile picture"
-          className="h-12 w-12 rounded-full object-cover"
-        />
-        <div className="flex w-full flex-grow flex-col">
-          {children}
-          {sources && <Sources sources={sources}></Sources>}
-        </div>
-      </div>
-
-      <div
-        className={classNames('w-[60%] border-b border-slate-200', {
-          hidden: hideSeperator,
-        })}
-      ></div>
-    </div>
-  );
-};
-
-export const Sources = ({ sources }: { sources: filepath[] }) => {
-  return (
-    <Disclosure>
-      <Disclosure.Button className="flex w-full items-center justify-between rounded-lg bg-slate-200 px-4 py-2 hover:bg-slate-100">
-        Sources
-        <RiArrowDropDownLine className="h-6 w-6" />
-      </Disclosure.Button>
-      <Disclosure.Panel className="px-4 text-slate-600">
-        {sources.map((source) => {
-          return <p>{source}</p>;
-        })}
-      </Disclosure.Panel>
-    </Disclosure>
-  );
-};
-
-// TODO: Layout bug when w set to 100%
-const Content = ({
-  content,
-  language = 'text',
-}: {
-  content: string;
-  language?: 'text' | string;
-}) => {
-  if (language === 'text') {
-    return <p>{content}</p>;
-  }
-  return (
-    <SyntaxHighlighter
-      className="w-[100%] flex-shrink"
-      language={language}
-      style={atomDark}
-      wrapLines={true}
-      showLineNumbers={true}
-    >
-      {content}
-    </SyntaxHighlighter>
   );
 };
