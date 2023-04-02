@@ -5,11 +5,12 @@ import morganMiddleware from "./config/morganMiddleware.js";
 import http from "http";
 import { Server } from "socket.io";
 import cors from "cors";
+import chalk from "chalk";
+
 import {
   ServerAIQueryResponse,
   ServerAIQueryRequest,
 } from "@baselinedocs/shared";
-import chalk from "chalk";
 
 dotenv.config();
 const port = 3000;
@@ -23,6 +24,27 @@ app.use(cors());
 
 app.get("/", (req: Request, res: Response) => {
   res.json({ status: "OK" });
+});
+
+// Handle the callback from the GitHub OAuth authorization page
+app.get("/auth/github/callback", async (req, res) => {
+  // The req.query object has the query params that were sent to this route.
+  const requestToken = req.query.code;
+
+  const response = await fetch(
+    `https://github.com/login/oauth/access_token?client_id=${process.env.GITHUB_CLIENT_ID}&client_secret=${process.env.GITHUB_CLIENT_SECRET}&code=${requestToken}`,
+    {
+      method: "post",
+      headers: {
+        accept: "application/json",
+      },
+    }
+  );
+  const data = await response.json();
+  const accessToken = data.access_token;
+  console.log(accessToken);
+  // redirect the user to the home page, along with the access token
+  res.redirect("http://localhost:5173/chat");
 });
 
 // error handler

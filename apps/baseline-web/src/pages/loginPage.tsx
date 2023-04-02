@@ -1,4 +1,5 @@
 import { Link } from 'wouter';
+import { ConnectToGithub } from '@components/connectToGithub';
 
 export const Loginpage = () => {
   return (
@@ -36,6 +37,8 @@ export const Loginpage = () => {
               Sign In
             </button>
           </Link>
+
+          <ConnectToGithub />
           <button className="hover:text-indigo-600">Forgot password?</button>
         </div>
       </div>

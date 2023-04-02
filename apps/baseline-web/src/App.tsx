@@ -25,7 +25,7 @@ function App() {
           </PageWithSidebar>
         )}
       />
-      <Route path="/" component={() => <Redirect to={'/chat'} />} />
+      <Route path="/" component={() => <Redirect to={'/login'} />} />
       <Route
         path="/:rest*"
         component={() => (
