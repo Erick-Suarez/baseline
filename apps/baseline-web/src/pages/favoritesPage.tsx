@@ -1,3 +1,5 @@
+import { BaselinePrimerDialog } from '@components/baslinePrimerDialog';
+
 export const FavoritesPage = () => {
   return (
     <div>
