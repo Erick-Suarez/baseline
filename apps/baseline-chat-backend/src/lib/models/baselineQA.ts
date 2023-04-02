@@ -7,11 +7,9 @@ import { CallbackManager } from "langchain/callbacks";
 import chalk from "chalk";
 import { PromptTemplate } from "langchain/prompts";
 import * as dotenv from "dotenv";
-import { QueryResponse } from "@pinecone-database/pinecone/dist/pinecone-generated-ts-fetch/index.js";
 import {
-  ResponseContent,
-  ResponseContentTypes,
   filepath,
+  MarkdownContent,
 } from "@baselinedocs/shared";
 import { BaseLanguageModel } from "langchain/base_language";
 import { ChainValues } from "langchain/schema";
@@ -51,15 +49,17 @@ in the form
 \`\`\`
 `;
 
-interface BaselineChatQAModelConfig {}
+interface BaselineChatQAModelConfig {
+  newTokenHandler: (token: string) => void;
+}
 
 export class BaselineChatQAModel {
   private QAchain: LLMChain;
   private summationChain: LLMChain;
   private chatHistory: Array<string>;
 
-  constructor() {
-    this.QAchain = this._initializeDefaultChatQAChain();
+  constructor({ newTokenHandler }: BaselineChatQAModelConfig) {
+    this.QAchain = this._initializeDefaultChatQAStreamingChain(newTokenHandler);
     this.summationChain = this._initializeDefaultSummationChain();
     this.chatHistory = [];
   }
@@ -90,7 +90,7 @@ export class BaselineChatQAModel {
     this._addToChatHistory(query, res.text);
 
     return {
-      response: this._splitIntoBlocks(res.text),
+      response: res.text as MarkdownContent,
       sources: relatedEmbeddings.map(
         (embedding) => embedding.metadata.filepath
       ),
@@ -138,31 +138,7 @@ export class BaselineChatQAModel {
 
     return await vectorStore.similaritySearch(query, embeddingsToReturn);
   }
-
-  private _splitIntoBlocks(content: string) {
-    let count = 0;
-    const types = ["text", "code"];
-    const result: ResponseContent[] = [];
-    for (const block of content.split("```")) {
-      const content = block.trim();
-      if (content !== "") {
-        let type;
-        if (count % 2 === 0) {
-          type = ResponseContentTypes.TEXT;
-        } else {
-          type = ResponseContentTypes.JAVASCRIPT;
-        }
-        result.push({
-          type: type,
-          data: block.trim(),
-        } as ResponseContent);
-      }
-      count += 1;
-    }
-
-    return result;
-  }
-
+      
   private _initializeDefaultSummationChain() {
     const summationPrompt = new PromptTemplate({
       template: DefaultSummationPrompt,
@@ -188,12 +164,37 @@ export class BaselineChatQAModel {
       llm: new ChatOpenAI({
         openAIApiKey: process.env.OPEN_AI_KEY,
         temperature: 0.1,
+        streaming: true,
+        callbackManager: CallbackManager.fromHandlers({
+          async handleLLMNewToken(token) {
+            console.log(token);
+          },
+        }),
+      }),
+      prompt: DefaultQAPromptTemplate,
+    });
+  }
+
+  private _initializeDefaultChatQAStreamingChain(
+    newTokenHandler: (token: string) => void
+  ) {
+    const DefaultQAPromptTemplate = new PromptTemplate({
+      template: DefaultQAPrompt,
+      inputVariables: ["chat_history", "context", "query"],
+    });
+
+    return new LLMChain({
+      llm: new ChatOpenAI({
+        openAIApiKey: process.env.OPEN_AI_KEY,
+        temperature: 0.1,
+        streaming: true,
+        callbackManager: CallbackManager.fromHandlers({
+          async handleLLMNewToken(token) {
+            newTokenHandler(token);
+          },
+        }),
       }),
       prompt: DefaultQAPromptTemplate,
     });
   }
 }
-
-const m = new BaselineChatQAModel();
-
-m.query("How do I use styled components");

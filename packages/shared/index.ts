@@ -1,20 +1,13 @@
 export interface ServerAIQueryResponse {
   original_query: string;
-  response: ResponseContent[];
+  response: MarkdownContent;
   sources: filepath[];
 }
 
 export type filepath = string;
 
-export interface ResponseContent {
-  type: ResponseContentTypes;
-  data: string;
-}
+export type MarkdownContent = string;
 
-export enum ResponseContentTypes {
-  TEXT = "text",
-  JAVASCRIPT = "javascript",
-}
 
 export interface ServerAIQueryRequest {
   query: string;
