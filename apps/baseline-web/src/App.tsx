@@ -2,27 +2,39 @@ import { ChatPage } from '@pages/chatPage';
 import { FavoritesPage } from '@pages/favoritesPage';
 import { Sidebar } from '@components/sidebar/sidebar';
 import { Route, Redirect, Switch } from 'wouter';
+import { Loginpage } from '@pages/loginPage';
+import { PageWithSidebar } from '@pages/templates/pageWithSidebar';
 
 function App() {
   return (
-    <div className="flex h-[100vh] w-[100vw]">
-      <Sidebar />
-      <div className="h-full w-full flex-grow">
-        <Switch>
-          <Route path="/chat" component={ChatPage} />
-          <Route path="/favorites" component={FavoritesPage} />
-          <Route path="/" component={() => <Redirect to={'/chat'} />} />
-          <Route
-            path="/:rest*"
-            component={() => (
-              <h1 className="mt-[40vh] text-center text-4xl font-bold">
-                404 Page not found
-              </h1>
-            )}
-          />
-        </Switch>
-      </div>
-    </div>
+    <Switch>
+      <Route path="/login" component={() => <Loginpage />} />
+      <Route
+        path="/chat"
+        component={() => (
+          <PageWithSidebar>
+            <ChatPage />
+          </PageWithSidebar>
+        )}
+      />
+      <Route
+        path="/favorites"
+        component={() => (
+          <PageWithSidebar>
+            <FavoritesPage />
+          </PageWithSidebar>
+        )}
+      />
+      <Route path="/" component={() => <Redirect to={'/chat'} />} />
+      <Route
+        path="/:rest*"
+        component={() => (
+          <h1 className="mt-[40vh] text-center text-4xl font-bold">
+            404 Page not found
+          </h1>
+        )}
+      />
+    </Switch>
   );
 }
 

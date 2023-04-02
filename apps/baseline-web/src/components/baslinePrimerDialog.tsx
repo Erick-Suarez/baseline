@@ -21,7 +21,7 @@ export const BaselinePrimerDialog = () => {
       {/* Full-screen container to center the panel */}
       <div className="fixed inset-0 flex items-center justify-center p-4">
         {/* The actual dialog panel  */}
-        <HeadlessDialog.Panel className="mx-auto flex max-w-2xl flex-col items-start rounded-2xl bg-white p-6 shadow-xl">
+        <HeadlessDialog.Panel className="mx-auto flex max-w-2xl flex-col items-start gap-2 rounded-2xl bg-white p-8 shadow-xl">
           <h1 className="mb-2 text-2xl font-bold">Welcome to Baseline!</h1>
           <p className="mb-5">
             Thanks so much for trying the product. Baseline AI has been trained
@@ -36,20 +36,20 @@ export const BaselinePrimerDialog = () => {
               <Disclosure.Panel className="px-4">
                 Baseline can answer questions like:
                 <ul className="list-disc">
-                  <li className="ml-8 mt-1">
+                  <li className="ml-8 mt-2">
                     How do we apply CSS to our codebase
                   </li>
-                  <li className="ml-8 mt-1">
+                  <li className="ml-8 mt-2">
                     Give me an example of how we implement something
                   </li>
-                  <li className="ml-8 mt-1">
+                  <li className="ml-8 mt-2">
                     What file does this component belong in
                   </li>
-                  <li className="ml-8 mt-1">Why am I getting this error</li>
-                  <li className="ml-8 mt-1">
+                  <li className="ml-8 mt-2">Why am I getting this error</li>
+                  <li className="ml-8 mt-2">
                     How would I build out this new feature
                   </li>
-                  <li className="ml-8 mt-1">And much more just try and ask!</li>
+                  <li className="ml-8 mt-2">And much more just try and ask!</li>
                 </ul>
               </Disclosure.Panel>
             </Disclosure>
@@ -62,24 +62,24 @@ export const BaselinePrimerDialog = () => {
                 To get the best results from Baseline its best to remember a few
                 points
                 <ul className="list-disc">
-                  <li className="ml-8 mt-1">
+                  <li className="ml-8 mt-2">
                     Most importantly Baseline AI is here to assist you. Do not
                     blindly follow its advice; instead use it as a guiding
                     point.
                   </li>
-                  <li className="ml-8 mt-1">
+                  <li className="ml-8 mt-2">
                     Try to be explicit. For example try providing filenames,
                     filepaths or variable if you have questions about them
                   </li>
-                  <li className="ml-8 mt-1">
+                  <li className="ml-8 mt-2">
                     If Baseline is having a hard time giving a useful answer
                     then just try rewording it or providing more context.
                   </li>
-                  <li className="ml-8 mt-1">
+                  <li className="ml-8 mt-2">
                     It is better to ask how to do clear steps in a large problem
                     rather than ask how to do the large problem all at once.
                   </li>
-                  <li className="ml-8 mt-1">
+                  <li className="ml-8 mt-2">
                     Reset the chat regularly like when you have a new query that
                     doesn't rely on the current chat
                   </li>
@@ -89,7 +89,7 @@ export const BaselinePrimerDialog = () => {
           </div>
           <button
             onClick={_handleClose}
-            className="rounded-md bg-indigo-600 px-6 py-2 text-sm text-white outline-none hover:bg-indigo-800"
+            className="text-md rounded-md bg-indigo-600 px-8 py-2 text-white outline-none hover:bg-indigo-800"
           >
             Got it
           </button>
