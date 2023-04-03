@@ -27,7 +27,7 @@ export const BaselinePrimerDialog = () => {
             Thanks so much for trying the product. Baseline AI has been trained
             on your codebase and can aswer questions about it!
           </p>
-          <div className="mb-5 flex w-full flex-col gap-3">
+          <div className="mb-3 flex w-full flex-col gap-5">
             <Disclosure>
               <Disclosure.Button className="flex w-full items-center justify-between rounded-lg bg-slate-200 px-4 py-2 outline-none hover:bg-indigo-100">
                 Types of questions Baseline can answer

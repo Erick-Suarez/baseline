@@ -1,6 +1,11 @@
 import React from 'react';
 import { IconType } from 'react-icons/lib';
-import { RiQuestionAnswerFill, RiStarFill } from 'react-icons/ri';
+import {
+  RiQuestionAnswerFill,
+  RiStarFill,
+  RiDatabase2Fill,
+  RiSettings4Fill,
+} from 'react-icons/ri';
 import { Link, useRoute } from 'wouter';
 import classNames from 'classnames';
 
@@ -16,6 +21,16 @@ export const NavMenu = () => {
         routeLabel="Favorites"
         routeIcon={RiStarFill}
         route="/favorites"
+      />
+      <NavMenuItem
+        routeLabel="Manage Data sources"
+        routeIcon={RiDatabase2Fill}
+        route="/manageData"
+      />
+      <NavMenuItem
+        routeLabel="Settings"
+        routeIcon={RiSettings4Fill}
+        route="/settings"
       />
     </div>
   );
