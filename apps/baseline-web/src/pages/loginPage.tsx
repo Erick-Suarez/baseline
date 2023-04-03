@@ -1,5 +1,5 @@
 import { Link } from 'wouter';
-import { ConnectToGithub } from '@components/connectToGithub';
+import { SyncWithGithubButton } from '@components/syncWithGithub';
 
 export const Loginpage = () => {
   return (
@@ -32,13 +32,11 @@ export const Loginpage = () => {
             </div>
           </div>
 
-          <Link href="/chat">
+          <Link href="/manageData">
             <button className="rounded-md bg-indigo-600 py-4 text-lg font-bold text-white hover:bg-indigo-800">
               Sign In
             </button>
           </Link>
-
-          <ConnectToGithub />
           <button className="hover:text-indigo-600">Forgot password?</button>
         </div>
       </div>

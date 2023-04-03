@@ -44,7 +44,7 @@ app.get("/auth/github/callback", async (req, res) => {
   const accessToken = data.access_token;
   console.log(accessToken);
   // redirect the user to the home page, along with the access token
-  res.redirect("http://localhost:5173/chat");
+  res.redirect("http://localhost:5173/syncComplete");
 });
 
 // error handler
