@@ -1,10 +1,10 @@
 import { RiGithubFill } from 'react-icons/ri';
 
 export const ConnectToGithub = () => {
-  const clientId = 'a68e2d81f0d6d87681ef';
+  const clientId = '7f87d72bbee3e1f28624';
 
   const handleLogin = () => {
-    const authUrl = `https://github.com/login/oauth/authorize?client_id=${clientId}`;
+    const authUrl = `https://github.com/login/oauth/authorize?client_id=${clientId}&scope=repo`;
     window.location.href = authUrl;
   };
 
