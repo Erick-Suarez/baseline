@@ -8,6 +8,12 @@ export type filepath = string;
 
 export type MarkdownContent = string;
 
+export interface Repositories {
+  [key: string]: {
+    name: string;
+    owner: string;
+  };
+}
 
 export interface ServerAIQueryRequest {
   query: string;

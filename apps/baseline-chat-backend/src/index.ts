@@ -6,15 +6,22 @@ import http from "http";
 import { Server } from "socket.io";
 import cors from "cors";
 import chalk from "chalk";
-
+import {
+  authGithub,
+  getRepositories,
+  downlaodRepoisitory,
+} from "./lib/github.js";
 import {
   ServerAIQueryResponse,
   ServerAIQueryRequest,
 } from "@baselinedocs/shared";
+interface Session {
+  [key: string]: any;
+}
 
 dotenv.config();
 const port = 3000;
-
+let session: Session = {};
 // TODO: Look into why you need createServer
 const app: Express = express();
 
@@ -29,22 +36,34 @@ app.get("/", (req: Request, res: Response) => {
 // Handle the callback from the GitHub OAuth authorization page
 app.get("/auth/github/callback", async (req, res) => {
   // The req.query object has the query params that were sent to this route.
-  const requestToken = req.query.code;
+  const accessToken = await authGithub(req.query.code);
+  session.accessToken = accessToken;
 
-  const response = await fetch(
-    `https://github.com/login/oauth/access_token?client_id=${process.env.GITHUB_CLIENT_ID}&client_secret=${process.env.GITHUB_CLIENT_SECRET}&code=${requestToken}`,
-    {
-      method: "post",
-      headers: {
-        accept: "application/json",
-      },
-    }
-  );
-  const data = await response.json();
-  const accessToken = data.access_token;
-  console.log(accessToken);
   // redirect the user to the home page, along with the access token
   res.redirect("http://localhost:5173/syncComplete");
+});
+
+app.get("/github/repos", async (req, res) => {
+  if (!session.accessToken) {
+    return res.send("access token not set");
+  }
+  const repositories = await getRepositories(session.accessToken);
+  session.repositories = repositories;
+  return res.send(repositories);
+});
+
+app.get("/github/repos/:id", async (req, res) => {
+  if (!session.accessToken) {
+    return res.send("access token not set");
+  }
+  const repo = session.repositories[req.params.id];
+  try {
+    await downlaodRepoisitory(session.accessToken, repo);
+    return res.send("success");
+  } catch (error) {
+    console.log(error);
+    return res.send("error");
+  }
 });
 
 // error handler
