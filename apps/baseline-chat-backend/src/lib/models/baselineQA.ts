@@ -7,10 +7,7 @@ import { CallbackManager } from "langchain/callbacks";
 import chalk from "chalk";
 import { PromptTemplate } from "langchain/prompts";
 import * as dotenv from "dotenv";
-import {
-  filepath,
-  MarkdownContent,
-} from "@baselinedocs/shared";
+import { filepath, MarkdownContent } from "@baselinedocs/shared";
 import { BaseLanguageModel } from "langchain/base_language";
 import { ChainValues } from "langchain/schema";
 import { Document } from "langchain/document";
@@ -18,25 +15,21 @@ import { Document } from "langchain/document";
 dotenv.config();
 
 const DefaultSummationPrompt = `
----
-Chat History:
+Given the following chat history and input query, create a new standalone query that combines the relevant information from both sources to convey the same meaning without relying on the chat history.
 
+Chat history:
 {chat_history}
 
----
-Input query: {query}
----
-Use the chat history to create a new query that has the same meaning as the input query.
+Input query:
+{query}
 
+New standalone query:
  `;
 
 const DefaultQAPrompt = `
 ---
-Chat History:
-
+Chat History: 
 {chat_history}
----
-Context:
 
 {context}
 ---
@@ -68,10 +61,12 @@ export class BaselineChatQAModel {
     /* Summarize chat history and query into new question */
     const summarizedQuery = await this._summarizeChatHistoryAndQuery(query);
 
+    console.log(chalk.green(`Summarized query: ${summarizedQuery.text}`));
+
     /* Get n related embeddings for the question */
     const relatedEmbeddings = await this._getRelatedEmbeddingsForQuery(
       summarizedQuery.text,
-      4
+      6
     );
 
     /* Create context string from embeddings */
@@ -138,7 +133,7 @@ export class BaselineChatQAModel {
 
     return await vectorStore.similaritySearch(query, embeddingsToReturn);
   }
-      
+
   private _initializeDefaultSummationChain() {
     const summationPrompt = new PromptTemplate({
       template: DefaultSummationPrompt,

@@ -10,9 +10,9 @@
     "lerna": "^6.6.1"
   },
   "scripts": {
-    "dev": "npm run build && concurrently \"cd apps/baseline-chat-backend && npm run dev\" \"cd apps/baseline-web && npm run dev\"",
-    "dev-server": "cd apps/baseline-chat-backend && npm run dev",
-    "dev-web": "cd apps/baseline-web && npm run dev",
-    "build": "npm i && npx lerna run build && npx lerna bootstrap"
+    "dev-server": "lerna run dev --scope @baselinedocs/baseline-chat-backend --stream",
+    "dev-web": "lerna run dev --scope @baslinedocs/baseline-web-next --stream",
+    "build": "npm i && npx lerna run build --ignore @baslinedocs/baseline-web-next && npx lerna bootstrap",
+    "dev": "npm run build && concurrently \"npm run dev-server\" \"npm run dev-web\""
   }
 }
