@@ -38,10 +38,12 @@ export const NavMenu = () => {
 };
 
 const NavMenuItem = ({
+  disabled,
   routeLabel,
   route,
   routeIcon,
 }: {
+  disabled?: boolean;
   routeLabel: string;
   route: string;
   routeIcon: IconType;
@@ -52,7 +54,8 @@ const NavMenuItem = ({
   return (
     <div
       className={classNames("w-full rounded-lg px-5 py-3", {
-        "pointer-events-none bg-indigo-200": isActive,
+        "pointer-events-none": isActive || disabled,
+        "bg-indigo-200": isActive,
       })}
     >
       <Link href={route} className="group inline-flex items-center gap-1">
