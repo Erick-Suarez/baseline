@@ -6,15 +6,12 @@ import http from "http";
 import { Server } from "socket.io";
 import cors from "cors";
 import chalk from "chalk";
-import {
-  authGithub,
-  getRepositories,
-  downlaodRepoisitory,
-} from "./lib/github.js";
+
 import {
   ServerAIQueryResponse,
   ServerAIQueryRequest,
 } from "@baselinedocs/shared";
+import { createGithubDataSyncForOrganization } from "./controllers/dataSyncController.js";
 interface Session {
   [key: string]: any;
 }
@@ -35,36 +32,40 @@ app.get("/", (req: Request, res: Response) => {
 
 // Handle the callback from the GitHub OAuth authorization page
 app.get("/auth/github/callback", async (req, res) => {
-  // The req.query object has the query params that were sent to this route.
-  const accessToken = await authGithub(req.query.code);
-  session.accessToken = accessToken;
+  req.query.organization_id = "1";
 
-  // redirect the user to the home page, along with the access token
-  res.redirect("http://localhost:5173/syncComplete");
+  if (!req.query.organization_id || !req.query.code) {
+    console.error("Missing query params from github oauth callback");
+    return res.status(500);
+  }
+
+  const { error } = await createGithubDataSyncForOrganization(
+    Number(req.query.organization_id),
+    req.query.code as string
+  );
+
+  if (error) {
+    console.error(error);
+    return res.status(500);
+  }
+
+  // redirect the user back to the manageData page
+  res.redirect("http://localhost:5173/manageData");
 });
 
-app.get("/github/repos", async (req, res) => {
-  if (!session.accessToken) {
-    return res.send("access token not set");
-  }
-  const repositories = await getRepositories(session.accessToken);
-  session.repositories = repositories;
-  return res.send(repositories);
-});
-
-app.get("/github/repos/:id", async (req, res) => {
-  if (!session.accessToken) {
-    return res.send("access token not set");
-  }
-  const repo = session.repositories[req.params.id];
-  try {
-    await downlaodRepoisitory(session.accessToken, repo);
-    return res.send("success");
-  } catch (error) {
-    console.log(error);
-    return res.send("error");
-  }
-});
+// app.get("/github/repos/:id", async (req, res) => {
+//   if (!session.accessToken) {
+//     return res.send("access token not set");
+//   }
+//   const repo = session.repositories[req.params.id];
+//   try {
+//     await downlaodRepoisitory(session.accessToken, repo);
+//     return res.send("success");
+//   } catch (error) {
+//     console.log(error);
+//     return res.send("error");
+//   }
+// });
 
 // error handler
 app.use(function (err: any, req: Request, res: Response, next: NextFunction) {

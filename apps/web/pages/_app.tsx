@@ -8,7 +8,6 @@ export default function App({ Component, pageProps }: AppProps) {
   const [currentProject, setCurrentProject] = useState<string | null>(
     "Select a project"
   );
-  const [demoStage, setDemoStage] = useState(0);
 
   return (
     <SessionProvider session={pageProps.session}>
@@ -16,8 +15,6 @@ export default function App({ Component, pageProps }: AppProps) {
         value={{
           currentProject,
           setCurrentProject,
-          demoStage,
-          setDemoStage,
         }}
       >
         <Component {...pageProps} />

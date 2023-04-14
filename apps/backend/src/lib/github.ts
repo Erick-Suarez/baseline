@@ -15,8 +15,8 @@ export async function authGithub(code: any) {
       },
     }
   );
-  const data = await response.json();
-  return data.access_token;
+
+  return await response.json();
 }
 
 export async function getRepositories(accessToken: string) {
@@ -30,17 +30,10 @@ export async function getRepositories(accessToken: string) {
     },
   });
 
-  return _.reduce(
-    response.data,
-    (result: Repositories, { id, name, owner }) => {
-      result[id] = { name, owner: owner.login };
-      return result;
-    },
-    {}
-  );
+  return response.data as Array<{ name: string; owner: { login: string } }>;
 }
 
-export async function downlaodRepoisitory(
+export async function downloadRepository(
   accessToken: string,
   repo: {
     name: string;

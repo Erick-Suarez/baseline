@@ -1,6 +1,6 @@
 import NextAuth from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
-import { createClient } from "@supabase/supabase-js";
+import { supabase } from "@/utils/supabase";
 
 export const authOptions = {
   pages: {
@@ -23,22 +23,10 @@ export const authOptions = {
         // You can also use the `req` object to obtain additional parameters
         // (i.e., the request IP address)
 
-        // Create a single supabase client for interacting with your database
-        const supabase = createClient(
-          process.env.SUPABASE_URL,
-          process.env.SUPABASE_SERVICE_ROLE_KEY,
-          {
-            db: { schema: "main" },
-          }
-        );
-
         const { data, error } = await supabase
           .from("users")
           .select()
           .eq("email", credentials.username);
-
-        console.log(data);
-        console.log(error);
 
         if (error || data.length === 0) {
           return null;
