@@ -1,5 +1,6 @@
 import { BaselinePrimerDialog } from "@/components/baslinePrimerDialog";
 import { Chat } from "@/components/chat";
+import { PageLoadAnimation } from "@/components/genericPageLoadAnimation";
 import { PageWithSidebar } from "@/components/layouts/pageWithSidebar";
 
 export default function ChatPage() {

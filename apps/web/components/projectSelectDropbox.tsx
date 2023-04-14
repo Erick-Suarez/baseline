@@ -1,6 +1,7 @@
 import { useState, useContext } from "react";
 import { Listbox } from "@headlessui/react";
 import { BaselineContext } from "@/context/baselineContext";
+import { useSession } from "next-auth/react";
 const projects = [
   {
     id: 1,

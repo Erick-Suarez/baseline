@@ -9,10 +9,16 @@ export default function App({ Component, pageProps }: AppProps) {
     "Select a project"
   );
   const [demoStage, setDemoStage] = useState(0);
+
   return (
     <SessionProvider session={pageProps.session}>
       <BaselineContext.Provider
-        value={{ currentProject, setCurrentProject, demoStage, setDemoStage }}
+        value={{
+          currentProject,
+          setCurrentProject,
+          demoStage,
+          setDemoStage,
+        }}
       >
         <Component {...pageProps} />
       </BaselineContext.Provider>

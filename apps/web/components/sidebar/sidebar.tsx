@@ -2,17 +2,19 @@ import { NavMenu } from "@/components/sidebar/navMenu";
 import { HUMAN_PROFILE_IMAGE } from "@/utils/images";
 import { ProjectSelectDropbox } from "@/components/projectSelectDropbox";
 import { RiLogoutBoxRLine } from "react-icons/ri";
-import Link from "next/link";
+import { signOut } from "next-auth/react";
 
 const _bottomSection = (
   <div className="flex flex-col items-center gap-5">
-    <Link
-      href="/login"
+    <button
       className="flex items-center gap-1 text-slate-600 hover:text-indigo-600"
+      onClick={() => {
+        signOut({ callbackUrl: "/auth/login" });
+      }}
     >
       Log out
       <RiLogoutBoxRLine />
-    </Link>
+    </button>
     <p className="font-semibold text-slate-600">Powered by Baseline</p>
   </div>
 );
