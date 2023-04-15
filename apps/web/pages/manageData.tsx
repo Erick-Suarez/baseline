@@ -4,15 +4,19 @@ import { SyncWithGithubButton } from "@/components/syncWithGithub";
 import { supabase } from "@/utils/supabase";
 import { GetServerSideProps } from "next";
 import { useState } from "react";
+import { authOptions } from "@/pages/api/auth/[...nextauth]";
+import { getServerSession } from "next-auth/next";
 
 export default function ManageDataPage({
   syncedSources: initialSyncedSources,
   projects: initialProjects,
   errorDuringFetching,
+  organization_id,
 }: {
   syncedSources: { github: boolean };
   projects: Array<Project>;
   errorDuringFetching: boolean;
+  organization_id: number;
 }) {
   const [syncedSources, setSyncedSources] = useState(initialSyncedSources);
   const [projects, setProjects] = useState(initialProjects);
@@ -29,7 +33,10 @@ export default function ManageDataPage({
           />
         </div>
         {!errorDuringFetching && (
-          <SyncWithGithubButton alreadySynced={syncedSources.github} />
+          <SyncWithGithubButton
+            alreadySynced={syncedSources.github}
+            organization_id={organization_id}
+          />
         )}
       </div>
     </PageWithSidebar>
@@ -37,13 +44,18 @@ export default function ManageDataPage({
 }
 
 export const getServerSideProps: GetServerSideProps = async (context) => {
-  const organization_id = 1;
-  const fetchProjectsResponse = await _fetchProjects(organization_id);
+  const session = await getServerSession(context.req, context.res, authOptions);
+  const fetchProjectsResponse = await _fetchProjects(
+    session.user.organization.organization_id
+  );
 
-  const getSyncedSourcesResponse = await _getSyncedSources(1);
+  const getSyncedSourcesResponse = await _getSyncedSources(
+    session.user.organization.organization_id
+  );
 
   return {
     props: {
+      organization_id: session.user.organization.organization_id,
       syncedSources: getSyncedSourcesResponse.data,
       projects: fetchProjectsResponse.data,
       errorDuringFetching:
@@ -73,7 +85,7 @@ async function _fetchProjects(organization_id: number) {
   const { data, error } = await supabase
     .from("repos")
     .select(
-      "repo_name, data_syncs(source), embedding_indexes(index_name, updated_at, last_repo_commit->commit_sha)"
+      "repo_name, data_syncs!inner(source), embedding_indexes(index_name, updated_at, last_repo_commit->commit_sha)"
     )
     .eq("data_syncs.organization_id", organization_id);
 

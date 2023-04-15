@@ -7,6 +7,27 @@ export const authOptions = {
     signIn: "/auth/login",
   },
   // Configure one or more authentication providers
+  callbacks: {
+    async jwt({ token, user }) {
+      if (user) {
+        token.profile_pic = user.profile_pic;
+        token.email_verified = user.email_verified;
+        token.organization = {
+          organization_id: user.organization_members[0].organization_id,
+          organization_name: user.organizations[0].organization_name,
+        };
+      }
+
+      return token;
+    },
+    async session({ session, token }) {
+      session.user.image = token.profile_pic;
+      session.user.email_verified = token.email_verified === true;
+      session.user.organization = token.organization;
+
+      return session;
+    },
+  },
   providers: [
     CredentialsProvider({
       // The name to display on the sign in form (e.g. 'Sign in with...')
@@ -25,7 +46,9 @@ export const authOptions = {
 
         const { data, error } = await supabase
           .from("users")
-          .select()
+          .select(
+            "*, organization_members(organization_id), organizations(organization_name)"
+          )
           .eq("email", credentials.username);
 
         if (error || data.length === 0) {

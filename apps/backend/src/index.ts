@@ -10,8 +10,12 @@ import chalk from "chalk";
 import {
   ServerAIQueryResponse,
   ServerAIQueryRequest,
+  deleteDataSyncRequest,
 } from "@baselinedocs/shared";
-import { createGithubDataSyncForOrganization } from "./controllers/dataSyncController.js";
+import {
+  createGithubDataSyncForOrganization,
+  deleteDataSync,
+} from "./controllers/dataSyncController.js";
 interface Session {
   [key: string]: any;
 }
@@ -32,15 +36,16 @@ app.get("/", (req: Request, res: Response) => {
 
 // Handle the callback from the GitHub OAuth authorization page
 app.get("/auth/github/callback", async (req, res) => {
-  req.query.organization_id = "1";
-
-  if (!req.query.organization_id || !req.query.code) {
+  if (!req.query.state || !req.query.code) {
     console.error("Missing query params from github oauth callback");
-    return res.status(500);
+    return res.status(400).json({ message: "Missing query params" });
   }
 
+  const stateObj = JSON.parse(decodeURIComponent(req.query.state as string));
+  const organization_id = stateObj.organization_id;
+
   const { error } = await createGithubDataSyncForOrganization(
-    Number(req.query.organization_id),
+    Number(organization_id),
     req.query.code as string
   );
 
@@ -52,6 +57,25 @@ app.get("/auth/github/callback", async (req, res) => {
   // redirect the user back to the manageData page
   res.redirect("http://localhost:5173/manageData");
 });
+
+app.delete(
+  "/data-sync/",
+  async (req: Request<{}, {}, deleteDataSyncRequest>, res) => {
+    // Delete Datasync for organization (Should cascade delete associated repos)
+    console.log("delete request");
+    const { error } = await deleteDataSync(req.body);
+
+    if (error) {
+      console.error(error);
+      return res.status(500);
+    }
+
+    // redirect the user back to the manageData page
+    res.status(200).json({
+      message: `Successfully deleted '${req.body.source}' data sync for ${req.body.organization_id}`,
+    });
+  }
+);
 
 // app.get("/github/repos/:id", async (req, res) => {
 //   if (!session.accessToken) {

@@ -2,6 +2,7 @@ import { authGithub, getRepositories } from "../lib/github.js";
 import * as dotenv from "dotenv";
 import { createClient } from "@supabase/supabase-js";
 import chalk from "chalk";
+import { deleteDataSyncRequest } from "@baselinedocs/shared";
 
 dotenv.config();
 
@@ -54,4 +55,14 @@ export async function createGithubDataSyncForOrganization(
   }
 
   return { error: null };
+}
+
+export async function deleteDataSync(deleteRequest: deleteDataSyncRequest) {
+  const { error } = await supabase
+    .from("data_syncs")
+    .delete()
+    .eq("source", deleteRequest.source)
+    .eq("organization_id", deleteRequest.organization_id);
+
+  return { error };
 }

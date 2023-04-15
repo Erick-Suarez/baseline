@@ -18,3 +18,8 @@ export interface Repositories {
 export interface ServerAIQueryRequest {
   query: string;
 }
+
+export interface deleteDataSyncRequest {
+  source: string;
+  organization_id: string;
+}

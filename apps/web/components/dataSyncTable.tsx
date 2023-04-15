@@ -17,6 +17,10 @@ export const ProjectDataTable = ({
   projects: Array<Project>;
   showErrorMessage?: boolean;
 }) => {
+  if (showErrorMessage) {
+    projects = [];
+  }
+
   return (
     <div className="max-h-[65vh] w-full flex-grow overflow-y-auto rounded-lg border-2 border-slate-200 shadow-lg">
       <table className="text w-full text-left">
