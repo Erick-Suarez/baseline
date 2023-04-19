@@ -83,7 +83,7 @@ export const ChatBlock = ({
           >
             {content}
           </ReactMarkdown>
-          {sources && <Sources sources={sources} />}
+          {sources && sources.length > 0 && <Sources sources={sources} />}
         </div>
       </div>
 

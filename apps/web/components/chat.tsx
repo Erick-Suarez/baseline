@@ -1,4 +1,4 @@
-import { useContext } from "react";
+import { useCallback, useContext } from "react";
 import { RiRefreshLine } from "react-icons/ri";
 import { ChatInputBar } from "@/components/chatInputBar";
 import { useState, useRef, useEffect } from "react";
@@ -38,7 +38,31 @@ export const Chat = () => {
   const [streamBuffer, setStreamBuffer] = useState<string[]>([]);
   const chatBoxEnd = useRef(null);
 
+  const _resetState = () => {
+    setChatBlockList([
+      {
+        type: ChatBlockType.AI,
+        data: "Welcome to Baseline! Ask questions about your codebase to get started",
+      },
+    ]);
+    setInputValue("");
+    setStreamBuffer([]);
+    setWaitingForResponse(false);
+  };
+
   useEffect(() => {
+    _resetState();
+
+    setChatBlockList([
+      {
+        type: ChatBlockType.AI,
+        data: "Welcome to Baseline! Ask questions about your codebase to get started",
+      },
+    ]);
+    setInputValue("");
+    setStreamBuffer([]);
+    setWaitingForResponse(false);
+
     if (!currentProject) {
       router.push("/manageData");
     }
@@ -75,18 +99,12 @@ export const Chat = () => {
     _scrollToBottom();
   }, [socketConnection]);
 
-  async function _handleResetChat() {
-    setChatBlockList([
-      {
-        type: ChatBlockType.AI,
-        data: "Welcome to Baseline! Ask questions about your codebase to get started",
-      },
-    ]);
-    setInputValue("");
-    setStreamBuffer([]);
-    setWaitingForResponse(false);
-    socketConnection?.emit("reset-chat");
-  }
+  const _handleResetChat = () => {
+    _resetState();
+    if (socketConnection) {
+      socketConnection.emit("reset-chat");
+    }
+  };
 
   function _handleSubmit() {
     if (inputValue.length > 0) {

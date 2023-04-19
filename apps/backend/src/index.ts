@@ -15,6 +15,7 @@ import {
   Project,
 } from "@baselinedocs/shared";
 import { createGithubDataSyncForOrganization } from "./controllers/dataSyncController.js";
+import { DefaultChatQAModel } from "./lib/models/defaultQA.js";
 
 dotenv.config();
 const port = 3000;
@@ -80,16 +81,22 @@ io.on("connection", (socket) => {
     socket.emit("query-response-stream-token", token);
   };
 
-  let baselineQAModel: BaselineChatQAModel;
+  let baselineQAModel: BaselineChatQAModel | DefaultChatQAModel;
 
   socket.on("initialize-chat", (data: Project) => {
     // Initialize new BaselineQAModel using project data
-    console.log("Baseline model initialized");
     if (data) {
-      baselineQAModel = new BaselineChatQAModel({
-        newTokenHandler,
-        indexName: data.index_list[0].index_name,
-      });
+      if (data.id == "-1") {
+        // Initialize Default GPT
+        baselineQAModel = new DefaultChatQAModel({ newTokenHandler });
+      } else {
+        baselineQAModel = new BaselineChatQAModel({
+          newTokenHandler,
+          indexName: data.index_list[0].index_name,
+        });
+      }
+
+      console.log("Baseline model initialized");
     }
   });
 

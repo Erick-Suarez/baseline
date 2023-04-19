@@ -25,27 +25,29 @@ original_query:
 new query:
  `;
 
-const DefaultQAPrompt = `
+const DefaultBaselineQAPrompt = `
 ---
 You are an AI chatbot designed to help humans write and understand their codebase. You can engage in a chat, and you will be provided with chat_history (previous messages between the AI and the human) and related_context (code files) to assist in answering any questions. If the context files are not helpful or relevant, you should answer normally using your pre-existing knowledge. You should not make up any information, and respond with "I don't know" if you cannot answer a question confidently. Your behavior should be similar to ChatGPT, but you should use chat_history and related_context to provide more accurate answers.
 
 When providing code blocks as responses, use markdown formatting. If you need to modify an existing file, please specify the file name and add comments to the edited code sections to guide the human user.
 Focus on the user's intent, and use only the necessary files from related_context, disregarding any irrelevant files.
 
-chat_history: [
+chat_history: 
 {chat_history}
-]
-related_context: [
-  {context}
-]
 
+related_context: 
+{context}
+
+query:
 {query}
+
+reponse:
 `;
 
-interface BaselineChatQAModelConfig {
+type BaselineChatQAModelConfig = {
   newTokenHandler: (token: string) => void;
   indexName: string;
-}
+};
 
 export class BaselineChatQAModel {
   private QAchain: LLMChain;
@@ -152,32 +154,11 @@ export class BaselineChatQAModel {
     });
   }
 
-  private _initializeDefaultChatQAChain() {
-    const DefaultQAPromptTemplate = new PromptTemplate({
-      template: DefaultQAPrompt,
-      inputVariables: ["chat_history", "context", "query"],
-    });
-
-    return new LLMChain({
-      llm: new ChatOpenAI({
-        openAIApiKey: process.env.OPEN_AI_KEY,
-        temperature: 0.1,
-        streaming: true,
-        callbackManager: CallbackManager.fromHandlers({
-          async handleLLMNewToken(token) {
-            console.log(token);
-          },
-        }),
-      }),
-      prompt: DefaultQAPromptTemplate,
-    });
-  }
-
   private _initializeDefaultChatQAStreamingChain(
     newTokenHandler: (token: string) => void
   ) {
     const DefaultQAPromptTemplate = new PromptTemplate({
-      template: DefaultQAPrompt,
+      template: DefaultBaselineQAPrompt,
       inputVariables: ["chat_history", "context", "query"],
     });
 

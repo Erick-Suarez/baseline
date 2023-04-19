@@ -9,7 +9,10 @@ export const ProjectSelectDropbox = () => {
     useContext(BaselineContext);
 
   const projectsWithEmbeddings = projects.filter((project) => {
-    return project.index_list.length > 0 && project.index_list[0].ready;
+    return (
+      project.id == "-1" || // Default GPT
+      (project.index_list.length > 0 && project.index_list[0].ready)
+    );
   });
 
   return (

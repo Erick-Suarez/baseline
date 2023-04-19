@@ -23,7 +23,7 @@ export const ChatInputBar = ({
   return (
     <div
       className={classNames(
-        "group flex w-full items-center justify-between rounded-xl border px-5 py-3",
+        "group mb-5 flex w-full items-end justify-between rounded-xl border px-5 py-5",
         {
           "border-slate-200 bg-slate-200 hover:border-slate-200 focus:border-slate-200":
             disabled,

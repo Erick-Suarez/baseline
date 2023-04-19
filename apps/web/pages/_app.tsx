@@ -11,9 +11,17 @@ import {
 } from "@baselinedocs/shared";
 import { useRouter } from "next/router";
 
+const defaultGPTProject: Project = {
+  id: "-1",
+  name: "Default GPT",
+  display_name: "Default GPT",
+  source: "",
+  index_list: [],
+};
+
 export default function App({ Component, pageProps }: AppProps) {
   const [currentProject, setCurrentProject] = useState<Project | null>(null);
-  const [projects, setProjects] = useState<Array<Project>>([]);
+  const [projects, setProjects] = useState<Array<Project>>([defaultGPTProject]);
   const [dataSyncs, setDataSyncs] = useState<DataSyncs>({
     github: false,
   });
@@ -68,7 +76,7 @@ const _ComponentWithSession = (props: any) => {
                 });
               });
 
-              setProjects(projects);
+              setProjects([...projects, defaultGPTProject]);
               if (projects.length === 0) {
                 setCurrentProject(null);
               }
