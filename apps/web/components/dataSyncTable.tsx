@@ -1,14 +1,13 @@
-import { EmbeddingIndex } from "@/pages/manageData";
+import { useContext } from "react";
+import { BaselineContext } from "@/context/baselineContext";
+import {
+  createEmbeddingFromRepositoryRequest,
+  EmbeddingIndex,
+  Project,
+} from "@baselinedocs/shared";
 import { Disclosure, Menu } from "@headlessui/react";
-import { useState } from "react";
 import { RiCheckFill, RiCloseFill, RiMoreFill } from "react-icons/ri";
 import { BarLoader } from "react-spinners";
-
-export interface Project {
-  name: string;
-  source: string;
-  index_list: Array<EmbeddingIndex>;
-}
 
 export const ProjectDataTable = ({
   projects,
@@ -21,8 +20,10 @@ export const ProjectDataTable = ({
     projects = [];
   }
 
+  const { forceRefresh } = useContext(BaselineContext);
+
   return (
-    <div className="max-h-[65vh] w-full flex-grow overflow-y-auto rounded-lg border-2 border-slate-200 shadow-lg">
+    <div className="max-h-[65vh] w-full flex-grow overflow-y-auto rounded-lg border-2 border-slate-200 pb-5 shadow-lg">
       <table className="text w-full text-left">
         <thead className="sticky top-0 z-50 bg-slate-200 shadow">
           <tr>
@@ -61,17 +62,18 @@ export const ProjectDataTable = ({
             </tr>
           )}
           {projects.map((project, index) => {
+            const { type, data: projectStatus } = _getStatusOfProject(project);
             return (
               <tr key={`data_row_${index}`} className="border-b bg-white">
                 <th
                   scope="row"
                   className="whitespace-nowrap px-6 py-4 font-medium"
                 >
-                  {project.name}
+                  {project.display_name}
                 </th>
                 <td className="px-6 py-4 capitalize">{project.source}</td>
                 <td className="flex items-center gap-2 px-6 py-4">
-                  {_getStatusOfProject(project)}
+                  {projectStatus}
                 </td>
                 <td className="relative bg-white px-6 py-4">
                   <Menu>
@@ -80,14 +82,64 @@ export const ProjectDataTable = ({
                     </Menu.Button>
                     <Menu.Items className="absolute left-[10] right-[25px] z-10 w-[128px] rounded-md border border-slate-200 bg-white p-2 text-sm">
                       <Menu.Item>
-                        {({ active }) => (
-                          <button
-                            className={`hover:text-indigo-600`}
-                            onClick={() => {}}
-                          >
-                            Create Baseline
-                          </button>
-                        )}
+                        {({ close }) => {
+                          if (type === ProjectBaselineStatus.NOT_CREATED) {
+                            return (
+                              <button
+                                className={`hover:text-indigo-600`}
+                                onClick={(event) => {
+                                  const payload: createEmbeddingFromRepositoryRequest =
+                                    {
+                                      repo_id: project.id,
+                                    };
+
+                                  fetch("http://localhost:3000/baseline", {
+                                    method: "POST",
+                                    headers: {
+                                      "Content-Type": "application/json",
+                                    },
+                                    body: JSON.stringify(payload),
+                                  })
+                                    .then((res) => res.json())
+                                    .then((data) => {
+                                      forceRefresh();
+                                    })
+                                    .catch((err) => {
+                                      /* TODO: Handle Error */
+                                    });
+                                }}
+                              >
+                                Create Baseline
+                              </button>
+                            );
+                          } else {
+                            return (
+                              <button
+                                onClick={() => {
+                                  fetch("http://localhost:3000/baseline", {
+                                    method: "DELETE",
+                                    headers: {
+                                      "Content-Type": "application/json",
+                                    },
+                                    body: JSON.stringify({
+                                      repo_id: project.id,
+                                    }),
+                                  })
+                                    .then((res) => res.json())
+                                    .then((data) => {
+                                      forceRefresh();
+                                    })
+                                    .catch((err) => {
+                                      /* TODO: Handle Error */
+                                    });
+                                }}
+                                className={`hover:text-indigo-600`}
+                              >
+                                Delete Baseline
+                              </button>
+                            );
+                          }
+                        }}
                       </Menu.Item>
                     </Menu.Items>
                   </Menu>
@@ -100,6 +152,12 @@ export const ProjectDataTable = ({
     </div>
   );
 };
+
+enum ProjectBaselineStatus {
+  READY,
+  IN_PROGRESS,
+  NOT_CREATED,
+}
 
 export const DataStatuses = {
   llmReady: (
@@ -123,10 +181,21 @@ export const DataStatuses = {
   ),
 };
 
+// TODO: Refactor so DataStatuses and interface are not coupled
 function _getStatusOfProject(project: Project) {
   if (project.index_list.length === 0) {
-    return DataStatuses.llmNotTrained;
+    return {
+      type: ProjectBaselineStatus.NOT_CREATED,
+      data: DataStatuses.llmNotTrained,
+    };
   }
 
-  return DataStatuses.llmReady;
+  if (!project.index_list[0].ready) {
+    return {
+      type: ProjectBaselineStatus.IN_PROGRESS,
+      data: DataStatuses.llmTrainingInProgress,
+    };
+  }
+
+  return { type: ProjectBaselineStatus.READY, data: DataStatuses.llmReady };
 }

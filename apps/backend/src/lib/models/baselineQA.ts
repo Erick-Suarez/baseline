@@ -1,14 +1,13 @@
-import { ChatOpenAI } from "langchain/chat_models";
+import { ChatOpenAI } from "langchain/chat_models/openai";
 import { LLMChain } from "langchain/chains";
-import { OpenAIEmbeddings } from "langchain/embeddings";
+import { OpenAIEmbeddings } from "langchain/embeddings/openai";
 import { PineconeClient } from "@pinecone-database/pinecone";
-import { PineconeStore } from "langchain/vectorstores";
+import { PineconeStore } from "langchain/vectorstores/pinecone";
 import { CallbackManager } from "langchain/callbacks";
 import chalk from "chalk";
 import { PromptTemplate } from "langchain/prompts";
 import * as dotenv from "dotenv";
 import { filepath, MarkdownContent } from "@baselinedocs/shared";
-import { BaseLanguageModel } from "langchain/base_language";
 import { ChainValues } from "langchain/schema";
 import { Document } from "langchain/document";
 
@@ -45,17 +44,20 @@ related_context: [
 
 interface BaselineChatQAModelConfig {
   newTokenHandler: (token: string) => void;
+  indexName: string;
 }
 
 export class BaselineChatQAModel {
   private QAchain: LLMChain;
   private summationChain: LLMChain;
   private chatHistory: Array<string>;
+  private indexName: string;
 
-  constructor({ newTokenHandler }: BaselineChatQAModelConfig) {
+  constructor({ newTokenHandler, indexName }: BaselineChatQAModelConfig) {
     this.QAchain = this._initializeDefaultChatQAStreamingChain(newTokenHandler);
     this.summationChain = this._initializeDefaultSummationChain();
     this.chatHistory = [];
+    this.indexName = indexName;
   }
 
   async query(query: string) {
@@ -125,7 +127,7 @@ export class BaselineChatQAModel {
       environment: process.env.PINECONE_ENVIRONMENT!,
     });
 
-    const pineconeIndex = client.Index(process.env.PINECONE_INDEX!);
+    const pineconeIndex = client.Index(this.indexName);
 
     const vectorStore = await PineconeStore.fromExistingIndex(
       new OpenAIEmbeddings(),

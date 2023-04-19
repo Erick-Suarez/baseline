@@ -30,14 +30,18 @@ export async function getRepositories(accessToken: string) {
     },
   });
 
-  return response.data as Array<{ name: string; owner: { login: string } }>;
+  return response.data as Array<{
+    name: string;
+    full_name: string;
+    owner: { login: string };
+  }>;
 }
 
 export async function downloadRepository(
   accessToken: string,
   repo: {
-    name: string;
-    owner: string;
+    repo_name: string;
+    repo_owner: string;
   }
 ) {
   const octokit = new Octokit({
@@ -45,19 +49,51 @@ export async function downloadRepository(
   });
 
   const tarball = await octokit.request("GET /repos/{owner}/{repo}/tarball/", {
-    owner: repo.owner,
-    repo: repo.name,
+    owner: repo.repo_owner,
+    repo: repo.repo_name,
     headers: {
       "X-GitHub-Api-Version": "2022-11-28",
     },
   });
 
-  const tarFilepath = path.join("codebases", `${repo.owner}-${repo.name}.zip`);
+  const tempDir = "temp/repositories";
+  if (!fs.existsSync(tempDir)) {
+    fs.mkdirSync(tempDir, { recursive: true });
+  }
+
+  const tarFilepath = path.join(
+    "temp/repositories/",
+    `${repo.repo_name}_${Date.now()}.tar.gz`
+  );
+
+  const extractFilePath = path.join("temp/repositories");
 
   fs.writeFileSync(tarFilepath, Buffer.from(tarball.data));
   console.log(`TAR file downloaded and saved to ${tarFilepath}`);
-  await tar.extract({ file: tarFilepath, cwd: "codebases" });
-  console.log("TAR file extracted to codebases");
+  await tar.extract({ file: tarFilepath, cwd: extractFilePath });
+  console.log("TAR file extracted");
   fs.unlinkSync(tarFilepath);
   console.log(`TAR file deleted`);
+
+  const filename = extractFilenameFromContentDisposition(
+    tarball.headers["content-disposition"] as string
+  );
+
+  if (!filename) {
+    throw "Content-disposition did not contain filename";
+  }
+
+  return path.join("temp/repositories/", filename.replace(".tar.gz", ""));
+}
+
+function extractFilenameFromContentDisposition(data: string) {
+  const regex = /filename=(.*)/;
+
+  const matches = data.match(regex);
+
+  if (!matches) {
+    return null;
+  }
+
+  return matches[1];
 }

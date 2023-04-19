@@ -1,14 +1,19 @@
 import { RiGithubFill } from "react-icons/ri";
 import classNames from "classnames";
+import { DataSyncs } from "@/types/project";
+import { useContext } from "react";
+import { BaselineContext } from "@/context/baselineContext";
 
 export const SyncWithGithubButton = ({
   alreadySynced,
   organization_id,
+  onSync,
 }: {
   alreadySynced?: boolean;
   organization_id: number;
+  onSync: (arg: DataSyncs) => void;
 }) => {
-  // TODO: Remove this hardcode
+  const { setDataSyncs } = useContext(BaselineContext);
   const clientId = "7f87d72bbee3e1f28624";
 
   // Create state to persist between calls to the backend
@@ -18,15 +23,37 @@ export const SyncWithGithubButton = ({
     })
   );
 
+  function _resyncGithub(organization_id: number) {
+    const resyncConfirm = window.confirm(
+      "Are you sure you want to resync Github? This will delete all current Github repositories"
+    );
+
+    if (resyncConfirm) {
+      // Start resync process
+      fetch("http://localhost:3000/data-sync", {
+        method: "DELETE",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          source: "github",
+          organization_id,
+        }),
+      }).then(() => {
+        // Reload on success
+        onSync({ github: false });
+      });
+    }
+  }
+
   return (
     <button
       onClick={() => {
         if (alreadySynced) {
+          setDataSyncs({ github: true });
           _resyncGithub(organization_id);
         } else {
-          _syncWithGithub(
-            `https://github.com/login/oauth/authorize?state=${stateObj}&client_id=${clientId}&scope=repo&prompt=select_account`
-          );
+          window.location.href = `https://github.com/login/oauth/authorize?state=${stateObj}&client_id=${clientId}&scope=repo&prompt=select_account`;
         }
       }}
       className={classNames(
@@ -45,30 +72,3 @@ export const SyncWithGithubButton = ({
     </button>
   );
 };
-
-function _syncWithGithub(url: string) {
-  window.location.href = url;
-}
-
-function _resyncGithub(organization_id: number) {
-  const resyncConfirm = window.confirm(
-    "Are you sure you want to resync Github? This will delete all current Github repositories"
-  );
-
-  if (resyncConfirm) {
-    // Start resync process
-    fetch("http://localhost:3000/data-sync", {
-      method: "DELETE",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        source: "github",
-        organization_id,
-      }),
-    }).then(() => {
-      // Reload on success
-      window.location.reload();
-    });
-  }
-}

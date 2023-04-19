@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useContext } from "react";
 import { IconType } from "react-icons/lib";
 import {
   RiQuestionAnswerFill,
@@ -9,11 +9,14 @@ import {
 import Link from "next/link";
 import { useRouter } from "next/router";
 import classNames from "classnames";
+import { BaselineContext } from "@/context/baselineContext";
 
 export const NavMenu = () => {
+  const { currentProject } = useContext(BaselineContext);
   return (
     <div className="flex w-full flex-grow flex-col">
       <NavMenuItem
+        disabled={currentProject === null}
         routeLabel="Chat"
         routeIcon={RiQuestionAnswerFill}
         route="/chat"
@@ -62,14 +65,16 @@ const NavMenuItem = ({
         {React.createElement(routeIcon, {
           className: classNames("h-5 w-5 group-hover:text-indigo-600", {
             "text-indigo-600": isActive,
-            "text-slate-600": !isActive,
+            "text-slate-600": !isActive && !disabled,
+            "text-slate-400": disabled,
           }),
         })}
 
         <h1
           className={classNames("group-hover:text-indigo-600", {
             "text-indigo-600": isActive,
-            "text-slate-600": !isActive,
+            "text-slate-600": !isActive && !disabled,
+            "text-slate-400": disabled,
           })}
         >
           {routeLabel}

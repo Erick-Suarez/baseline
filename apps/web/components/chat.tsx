@@ -1,3 +1,4 @@
+import { useContext } from "react";
 import { RiRefreshLine } from "react-icons/ri";
 import { ChatInputBar } from "@/components/chatInputBar";
 import { useState, useRef, useEffect } from "react";
@@ -10,6 +11,9 @@ import {
   MarkdownContent,
 } from "@baselinedocs/shared";
 import { ChatBlock, ChatBlockType } from "@/components/chatBlock";
+import { BaselineContext } from "@/context/baselineContext";
+import assert from "assert";
+import { useRouter } from "next/router";
 
 interface ChatEntry {
   type: ChatBlockType;
@@ -20,6 +24,8 @@ interface ChatEntry {
 const TIMEOUT_LIMIT = 30000;
 
 export const Chat = () => {
+  const { currentProject, projects } = useContext(BaselineContext);
+  const router = useRouter();
   const [socketConnection, setSocketConnection] = useState<Socket | null>(null);
   const [chatBlockList, setChatBlockList] = useState<ChatEntry[]>([
     {
@@ -30,18 +36,20 @@ export const Chat = () => {
   const [inputValue, setInputValue] = useState<string>("");
   const [waitingForResponse, setWaitingForResponse] = useState<boolean>(false);
   const [streamBuffer, setStreamBuffer] = useState<string[]>([]);
-
   const chatBoxEnd = useRef(null);
 
   useEffect(() => {
+    if (!currentProject) {
+      router.push("/manageData");
+    }
     const socket = io("http://localhost:3000");
-
     setSocketConnection(socket);
+    socket.emit("initialize-chat", currentProject);
 
     return () => {
       socket.close();
     };
-  }, []);
+  }, [currentProject, router]);
 
   useEffect(() => {
     socketConnection?.on("query-response-stream-token", (token) => {

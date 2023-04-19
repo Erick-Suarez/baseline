@@ -6,35 +6,37 @@ import http from "http";
 import { Server } from "socket.io";
 import cors from "cors";
 import chalk from "chalk";
-
+import dataSyncRoute from "./routes/dataSyncRoute.js";
+import embeddingIndexRoute from "./routes/EmbeddingIndexRoute.js";
+import repositoryRoute from "./routes/repositoryRoute.js";
 import {
   ServerAIQueryResponse,
   ServerAIQueryRequest,
-  deleteDataSyncRequest,
+  Project,
 } from "@baselinedocs/shared";
-import {
-  createGithubDataSyncForOrganization,
-  deleteDataSync,
-} from "./controllers/dataSyncController.js";
-interface Session {
-  [key: string]: any;
-}
+import { createGithubDataSyncForOrganization } from "./controllers/dataSyncController.js";
 
 dotenv.config();
 const port = 3000;
-let session: Session = {};
-// TODO: Look into why you need createServer
+
 const app: Express = express();
 
+// Configure Middleware
 app.use(express.json());
 app.use(morganMiddleware);
 app.use(cors());
+
+// Configure Routes
+app.use("/data-sync", dataSyncRoute);
+app.use("/baseline", embeddingIndexRoute);
+app.use("/projects", repositoryRoute);
 
 app.get("/", (req: Request, res: Response) => {
   res.json({ status: "OK" });
 });
 
 // Handle the callback from the GitHub OAuth authorization page
+// TODO: Add to route file
 app.get("/auth/github/callback", async (req, res) => {
   if (!req.query.state || !req.query.code) {
     console.error("Missing query params from github oauth callback");
@@ -51,45 +53,12 @@ app.get("/auth/github/callback", async (req, res) => {
 
   if (error) {
     console.error(error);
-    return res.status(500);
+    return res.status(500).send();
   }
 
   // redirect the user back to the manageData page
   res.redirect("http://localhost:5173/manageData");
 });
-
-app.delete(
-  "/data-sync/",
-  async (req: Request<{}, {}, deleteDataSyncRequest>, res) => {
-    // Delete Datasync for organization (Should cascade delete associated repos)
-    console.log("delete request");
-    const { error } = await deleteDataSync(req.body);
-
-    if (error) {
-      console.error(error);
-      return res.status(500);
-    }
-
-    // redirect the user back to the manageData page
-    res.status(200).json({
-      message: `Successfully deleted '${req.body.source}' data sync for ${req.body.organization_id}`,
-    });
-  }
-);
-
-// app.get("/github/repos/:id", async (req, res) => {
-//   if (!session.accessToken) {
-//     return res.send("access token not set");
-//   }
-//   const repo = session.repositories[req.params.id];
-//   try {
-//     await downlaodRepoisitory(session.accessToken, repo);
-//     return res.send("success");
-//   } catch (error) {
-//     console.log(error);
-//     return res.send("error");
-//   }
-// });
 
 // error handler
 app.use(function (err: any, req: Request, res: Response, next: NextFunction) {
@@ -111,31 +80,50 @@ io.on("connection", (socket) => {
     socket.emit("query-response-stream-token", token);
   };
 
-  const baselineQAModel = new BaselineChatQAModel({ newTokenHandler });
+  let baselineQAModel: BaselineChatQAModel;
+
+  socket.on("initialize-chat", (data: Project) => {
+    // Initialize new BaselineQAModel using project data
+    console.log("Baseline model initialized");
+    if (data) {
+      baselineQAModel = new BaselineChatQAModel({
+        newTokenHandler,
+        indexName: data.index_list[0].index_name,
+      });
+    }
+  });
 
   socket.on("query-request", async (data: ServerAIQueryRequest) => {
     console.log(
       `Query request received for client ${socket.id}: ${data.query}`
     );
-    try {
-      const ModelResponse = await baselineQAModel.query(data.query);
+    if (!baselineQAModel) {
+      console.error("Baseline model not initialized");
+    } else {
+      try {
+        const ModelResponse = await baselineQAModel.query(data.query);
 
-      const queryResponse: ServerAIQueryResponse = {
-        original_query: data.query,
-        response: ModelResponse.response,
-        sources: ModelResponse.sources,
-      };
+        const queryResponse: ServerAIQueryResponse = {
+          original_query: data.query,
+          response: ModelResponse.response,
+          sources: ModelResponse.sources,
+        };
 
-      console.log("emitting done");
-      socket.emit("query-response-stream-finished", queryResponse);
-    } catch (err) {
-      console.error(err);
+        console.log("emitting done");
+        socket.emit("query-response-stream-finished", queryResponse);
+      } catch (err) {
+        console.error(err);
+      }
     }
   });
 
   socket.on("reset-chat", () => {
     console.log(`Reset chat request received for client ${socket.id}`);
-    baselineQAModel.resetChatHistory();
+    if (!baselineQAModel) {
+      console.error("Baseline model not initialized");
+    } else {
+      baselineQAModel.resetChatHistory();
+    }
   });
 
   socket.on("disconnect", (reason) => {

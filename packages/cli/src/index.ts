@@ -2,7 +2,7 @@
 
 import chalk from "chalk";
 import figlet from "figlet";
-import { ingestDirectory, parseBaselineSettings } from "./lib/ingest.js";
+// import { ingestDirectory, parseBaselineSettings } from "./lib/ingest.js";
 import { initializeBaseline } from "./lib/init.js";
 
 const commands = {
@@ -11,12 +11,12 @@ const commands = {
     description:
       "Ingest codebase into Baseline embeddings based on provided paths in config",
     action: () => {
-      const settings = parseBaselineSettings();
-      ingestDirectory({
-        dirPath: settings.include[0],
-        validExtensions: settings.fileTypes,
-        excludePaths: settings.exclude,
-      });
+      // const settings = parseBaselineSettings();
+      // ingestDirectory({
+      //   dirPath: settings.include[0],
+      //   validExtensions: settings.fileTypes,
+      //   excludePaths: settings.exclude,
+      // });
     },
   },
   init: {

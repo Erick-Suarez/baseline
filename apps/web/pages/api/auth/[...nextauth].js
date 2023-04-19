@@ -1,6 +1,14 @@
 import NextAuth from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
-import { supabase } from "@/utils/supabase";
+import { createClient } from "@supabase/supabase-js";
+
+const supabase = createClient(
+  process.env.SUPABASE_URL,
+  process.env.SUPABASE_SERVICE_ROLE_KEY,
+  {
+    db: { schema: "main" },
+  }
+);
 
 export const authOptions = {
   pages: {
@@ -51,7 +59,10 @@ export const authOptions = {
           )
           .eq("email", credentials.username);
 
+        console.log(data);
+
         if (error || data.length === 0) {
+          console.error(error);
           return null;
         }
 
