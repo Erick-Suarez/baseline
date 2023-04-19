@@ -1,5 +1,6 @@
-import { RiSendPlane2Fill } from 'react-icons/ri';
-import classNames from 'classnames';
+import { RiSendPlane2Fill } from "react-icons/ri";
+import classNames from "classnames";
+import { useEffect, useRef } from "react";
 export const ChatInputBar = ({
   disabled,
   value,
@@ -8,44 +9,51 @@ export const ChatInputBar = ({
 }: {
   disabled: boolean;
   value: string;
-  handleChange: (arg: React.ChangeEvent<HTMLInputElement>) => void;
-  handleSubmit: (
-    arg:
-      | React.MouseEvent<HTMLButtonElement, MouseEvent>
-      | React.KeyboardEvent<HTMLInputElement>
-  ) => void;
+  handleChange: (value: string) => void;
+  handleSubmit: () => void;
 }) => {
+  const textAreaRef = useRef<HTMLTextAreaElement>(null);
+
+  useEffect(() => {
+    if (textAreaRef.current) {
+      textAreaRef.current.style.height = "auto";
+      textAreaRef.current.style.height = `${textAreaRef.current.scrollHeight}px`;
+    }
+  }, [value]);
   return (
     <div
       className={classNames(
-        'group flex w-full items-center justify-between rounded-xl border px-5 py-3',
+        "group flex w-full items-center justify-between rounded-xl border px-5 py-3",
         {
-          'border-slate-200 bg-slate-200 hover:border-slate-200 focus:border-slate-200':
+          "border-slate-200 bg-slate-200 hover:border-slate-200 focus:border-slate-200":
             disabled,
-          'border-slate-400 hover:border-slate-800 focus:border-slate-800':
+          "border-slate-400 hover:border-slate-800 focus:border-slate-800":
             !disabled,
         }
       )}
     >
-      <input
+      <textarea
+        ref={textAreaRef}
         disabled={disabled}
-        type="text"
-        className="flex-grow bg-transparent p-2 text-slate-800 outline-none"
-        placeholder={disabled ? 'Generating Response...' : 'Type something'}
+        rows={1}
+        className="h-auto max-h-[300px] flex-grow overflow-auto bg-transparent font-semibold text-slate-800 outline-none"
+        placeholder={disabled ? "Generating Response..." : "Type something"}
         value={value}
         onChange={(e) => {
-          handleChange(e);
+          handleChange(e.target.value);
         }}
         onKeyDown={(e) => {
-          if (e.key === 'Enter') {
-            handleSubmit(e);
+          if (e.key === "Enter" && !e.shiftKey) {
+            handleSubmit();
+          } else if (e.key === "Enter" && e.shiftKey) {
+            handleChange(value);
           }
         }}
       />
       <button
         disabled={disabled}
-        onClick={(e) => {
-          handleSubmit(e);
+        onClick={() => {
+          handleSubmit();
         }}
       >
         <RiSendPlane2Fill className="h-6 w-6 text-slate-400 hover:text-indigo-600" />

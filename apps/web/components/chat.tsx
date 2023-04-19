@@ -153,10 +153,10 @@ export const Chat = () => {
       <ChatInputBar
         disabled={waitingForResponse}
         value={inputValue}
-        handleChange={(e) => {
-          setInputValue(e.target.value);
+        handleChange={(value: string) => {
+          setInputValue(value);
         }}
-        handleSubmit={(e) => {
+        handleSubmit={() => {
           _handleSubmit();
         }}
       />
