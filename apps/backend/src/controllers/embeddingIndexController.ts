@@ -45,47 +45,47 @@ export async function createIndexFromRepository(
     embedding_id: createIndexResponse.data.embedding_index_id,
   });
 
-  // const { data, error } = await supabase
-  //   .from("data_syncs")
-  //   .select("access_token_data, repos!inner(repo_name, repo_owner)")
-  //   .eq("repos.repo_id", request.repo_id)
-  //   .maybeSingle();
+  const { data, error } = await supabase
+    .from("data_syncs")
+    .select("access_token_data, repos!inner(repo_name, repo_owner)")
+    .eq("repos.repo_id", request.repo_id)
+    .maybeSingle();
 
-  // if (error || !data) {
-  //   console.error(error);
-  // }
+  if (error || !data) {
+    console.error(error);
+  }
 
-  // const validatedData = data as DataSyncAccessTokenFromRepositoryModel;
-  // let filepath: string;
-  // try {
-  //   filepath = await downloadRepository(
-  //     validatedData.access_token_data.access_token,
-  //     validatedData.repos[0]
-  //   );
-  // } catch (error) {
-  //   console.error(error);
-  //   throw "Error downloading repository";
-  // }
+  const validatedData = data as DataSyncAccessTokenFromRepositoryModel;
+  let filepath: string;
+  try {
+    filepath = await downloadRepository(
+      validatedData.access_token_data.access_token,
+      validatedData.repos[0]
+    );
+  } catch (error) {
+    console.error(error);
+    throw "Error downloading repository";
+  }
 
-  // // TODO: Create child
-  // // Launch child process
-  // console.log("Launching Child process to ingest repository");
-  // await startIngestion(filepath, indexName);
+  // TODO: Create child
+  // Launch child process
+  console.log("Launching Child process to ingest repository");
+  try {
+    await startIngestion(filepath, indexName);
+    // Ingestion is done update DB entry
+    await supabase
+      .from("embedding_indexes")
+      .update({ ready: true })
+      .eq("embedding_index_id", createIndexResponse.data.embedding_index_id);
 
-  // // Ingestion is done update DB entry
-  // await supabase
-  //   .from("embedding_indexes")
-  //   .update({ ready: true })
-  //   .eq("embedding_index_id", createIndexResponse.data.embedding_index_id);
+    fs.rmSync(filepath, { recursive: true });
+    console.log(`${filepath} deleted successfully`);
+  } catch (error) {
+    // TODO: If any part fails we should reset the DB so the user can try again, or we should try to be ATOMIC and not save unless everything is successfull
+    // TODO: This process might be flaky too so we should revert to beginning and retry, Also might want to find a way to deal with server restarts
 
-  // try {
-  //   fs.rmSync(filepath, { recursive: true });
-  //   console.log(`${filepath} deleted successfully`);
-  // } catch (error) {
-  //   // TODO: If any part fails we should reset the DB so the user can try again, or we should try to be ATOMIC and not save unless everything is successfull
-  //   // TODO: This process might be flaky too so we should revert to beginning and retry, Also might want to find a way to deal with server restarts
-  //   console.error(error);
-  // }
+    console.error(error);
+  }
 }
 
 export async function deleteIndexForRepository(

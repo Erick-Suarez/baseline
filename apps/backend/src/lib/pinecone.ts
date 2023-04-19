@@ -8,7 +8,7 @@ import { OpenAIEmbeddings } from "langchain/embeddings/openai";
 
 dotenv.config();
 
-const VALID_EXT = [".js", ".jsx", ".ts", ".tsx", ".py"];
+const VALID_EXT = [".js", ".jsx", ".ts", ".tsx", ".py", ".html", ".css"];
 const IGNORE_DIRECTORIES = [".git", ".vscode", "node_modules", "dist"];
 
 // Create a client
@@ -142,6 +142,13 @@ async function createNewIndexAndWaitUntilReady(index_name: string) {
       }, 10000);
     });
   }
+
+  // Once ready wait another 10 seconds to make sure
+  await new Promise((resolve, err) => {
+    setTimeout(() => {
+      resolve("");
+    }, 10000);
+  });
 }
 
 export async function deleteIndex(index_name: string) {
