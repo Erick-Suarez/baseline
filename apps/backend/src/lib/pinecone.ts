@@ -5,11 +5,38 @@ import { PineconeClient } from "@pinecone-database/pinecone";
 import { PineconeStore } from "langchain/vectorstores/pinecone";
 import { Document } from "langchain/document";
 import { OpenAIEmbeddings } from "langchain/embeddings/openai";
-
+import { ChatOpenAI } from "langchain/chat_models";
+import { LLMChain } from "langchain/chains";
+import { PromptTemplate } from "langchain/prompts";
+import chalk from "chalk";
 dotenv.config();
 
 const VALID_EXT = [".js", ".jsx", ".ts", ".tsx", ".py", ".html", ".css"];
 const IGNORE_DIRECTORIES = [".git", ".vscode", "node_modules", "dist"];
+
+const chatModel = new ChatOpenAI({
+  openAIApiKey: process.env.OPEN_AI_KEY,
+  temperature: 0.7,
+});
+
+const codeSummaryTemplate = `
+I am going to give you code below. create a summary that is less than 300 characters.
+
+---
+
+
+{code}
+`;
+
+const codeSummaryPrompt = new PromptTemplate({
+  template: codeSummaryTemplate,
+  inputVariables: ["code"],
+});
+
+const codeSummaryChain = new LLMChain({
+  llm: chatModel,
+  prompt: codeSummaryPrompt,
+});
 
 // Create a client
 const client = new PineconeClient();
@@ -67,15 +94,22 @@ function loadFiles(directory: string, docs: Array<IngestionDoc>) {
 
 async function uploadDoc(doc: IngestionDoc, pineconeIndex: any) {
   const { filename, directory, filepath, content, importsList } = doc;
+  const summary = await codeSummaryChain.call({
+    code: content,
+  });
+
+  console.log(summary.text);
   await PineconeStore.fromDocuments(
     [
       new Document({
         pageContent:
-          `Filename: ${filename}\nFilepath: ${filepath}\n\n` + content,
+          `Filename: ${filename}\nFilepath: ${filepath}\nSummary:${summary.text}\n\n` +
+          content,
         metadata: {
           filename,
           directory,
           filepath,
+          summary: summary.text,
           imports: JSON.stringify(importsList),
         },
       }),
@@ -93,23 +127,37 @@ async function uploadDocsToPincone(
 ) {
   const maxSize = 4000;
   for (const { filename, directory, filepath, content, importsList } of docs) {
-    try {
-      for (let i = 0; i < content.length; i += maxSize) {
-        console.log(`Uploading: ${filepath}, chunk: [${i},${(i += maxSize)}]`);
-        await uploadDoc(
-          {
-            filename,
-            directory,
-            filepath,
-            content: content.substring(i, i + maxSize),
-            importsList,
-          },
-          pineconeIndex
-        );
+    for (let i = 0; i < content.length; i += maxSize) {
+      const maxRetries = 3;
+      for (let retry = 0; retry < maxRetries; retry++) {
+        console.log(`Uploading: ${filepath}, chunk: [${i},${i + maxSize}]`);
+        try {
+          await uploadDoc(
+            {
+              filename,
+              directory,
+              filepath,
+              content: content.substring(i, i + maxSize),
+              importsList,
+            },
+            pineconeIndex
+          );
+          break;
+        } catch (err) {
+          console.error(chalk.red(err));
+          console.log(
+            chalk.red(
+              `Error at ${filepath}, length of content: ${content.length}`
+            )
+          );
+          console.log(chalk.blue(`retrying upload ${retry}/${maxRetries}`));
+          await new Promise((resolve, err) => {
+            setTimeout(() => {
+              resolve("");
+            }, 10000);
+          });
+        }
       }
-    } catch (err) {
-      console.error(err);
-      console.log(`Error at ${filepath}, length of content: ${content.length}`);
     }
   }
 }

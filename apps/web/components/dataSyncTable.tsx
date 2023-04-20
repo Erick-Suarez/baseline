@@ -19,7 +19,10 @@ export const ProjectDataTable = ({
   if (showErrorMessage) {
     projects = [];
   }
-
+  projects = projects.sort((project1, project2) =>
+    project1.display_name.localeCompare(project2.display_name)
+  );
+  projects = projects.filter((project) => project.id != "-1");
   const { forceRefresh } = useContext(BaselineContext);
 
   return (
