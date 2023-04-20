@@ -5,7 +5,7 @@ import { PineconeClient } from "@pinecone-database/pinecone";
 import { PineconeStore } from "langchain/vectorstores/pinecone";
 import { Document } from "langchain/document";
 import { OpenAIEmbeddings } from "langchain/embeddings/openai";
-import { ChatOpenAI } from "langchain/chat_models";
+import { ChatOpenAI } from "langchain/chat_models/openai";
 import { LLMChain } from "langchain/chains";
 import { PromptTemplate } from "langchain/prompts";
 import chalk from "chalk";

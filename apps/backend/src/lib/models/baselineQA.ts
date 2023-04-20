@@ -71,7 +71,7 @@ export class BaselineChatQAModel {
     /* Get n related embeddings for the question */
     const relatedEmbeddings = await this._getRelatedEmbeddingsForQuery(
       summarizedQuery.text,
-      6
+      3
     );
 
     /* Create context string from embeddings */
