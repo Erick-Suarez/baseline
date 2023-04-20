@@ -10,6 +10,7 @@ import * as dotenv from "dotenv";
 import { filepath, MarkdownContent } from "@baselinedocs/shared";
 import { ChainValues } from "langchain/schema";
 import { Document } from "langchain/document";
+import { encode } from "gpt-3-encoder";
 
 dotenv.config();
 
@@ -32,10 +33,10 @@ You are an AI chatbot designed to help humans write and understand their codebas
 When providing code blocks as responses, use markdown formatting. If you need to modify an existing file, please specify the file name and add comments to the edited code sections to guide the human user.
 Focus on the user's intent, and use only the necessary files from related_context, disregarding any irrelevant files.
 
-chat_history: 
+chat_history:
 {chat_history}
 
-related_context: 
+related_context:
 {context}
 
 query:
@@ -74,8 +75,18 @@ export class BaselineChatQAModel {
       3
     );
 
+    const chatHistoryTokens = this.chatHistory.reduce(
+      (total, chat) => total + encode(chat).length,
+      0
+    );
+    const intialTokenTotal = encode(query).length + chatHistoryTokens;
+
+    const truncatedEmbeddingsList = this._truncateEmbeddings(
+      intialTokenTotal,
+      relatedEmbeddings
+    );
     /* Create context string from embeddings */
-    const context = relatedEmbeddings
+    const context = truncatedEmbeddingsList
       .map((embedding) => embedding.pageContent)
       .join("\n===\n");
 
@@ -91,7 +102,7 @@ export class BaselineChatQAModel {
 
     return {
       response: res.text as MarkdownContent,
-      sources: relatedEmbeddings.map(
+      sources: truncatedEmbeddingsList.map(
         (embedding) => embedding.metadata.filepath
       ),
     };
@@ -101,10 +112,38 @@ export class BaselineChatQAModel {
     this.chatHistory = [];
   }
 
+  private _truncateEmbeddings(
+    intialTokenTotal: number,
+    relatedEmbeddings: [Document<Record<string, any>>, number][]
+  ) {
+    const truncatedEmbeddingsList = [];
+    let total = intialTokenTotal;
+    console.log(`intial token total: ${total}`);
+    const max_tokens = 3800;
+    for (const embedding of relatedEmbeddings) {
+      const tokens = encode(embedding[0].pageContent);
+      console.log(
+        chalk.yellow(
+          `tokens: ${tokens.length} filepath: ${embedding[0].metadata.filepath}`
+        )
+      );
+      if (total + tokens.length < max_tokens && embedding[1] > 0.72) {
+        truncatedEmbeddingsList.push(embedding[0]);
+        total += tokens.length;
+        console.log(
+          chalk.green(
+            `added filepath: ${embedding[0].metadata.filepath}, token total: ${total}  simScore: ${embedding[1]}`
+          )
+        );
+      }
+    }
+    return truncatedEmbeddingsList;
+  }
+
   private _addToChatHistory(query: string, response: string) {
     this.chatHistory.push(`
     Human: ${query}
-    
+
     AI:${response}
     `);
   }
@@ -121,7 +160,7 @@ export class BaselineChatQAModel {
   private async _getRelatedEmbeddingsForQuery(
     query: string,
     embeddingsToReturn: number
-  ): Promise<Document[]> {
+  ): Promise<[Document, number][]> {
     const client = new PineconeClient();
 
     await client.init({
@@ -136,7 +175,10 @@ export class BaselineChatQAModel {
       { pineconeIndex }
     );
 
-    return await vectorStore.similaritySearch(query, embeddingsToReturn);
+    return await vectorStore.similaritySearchWithScore(
+      query,
+      embeddingsToReturn
+    );
   }
 
   private _initializeDefaultSummationChain() {
