@@ -2,7 +2,6 @@ import NextAuth from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
 import { createClient } from "@supabase/supabase-js";
 import * as jwt from "jsonwebtoken";
-import { setCookie } from "nookies";
 
 const supabase = createClient(
   process.env.SUPABASE_URL,
@@ -84,7 +83,7 @@ export const nextAuthOptions = (req, res) => {
             maxAge: 60 * 60 * 24,
             path: "/",
             httpOnly: true,
-            sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
+            sameSite: process.env.NODE_ENV === "production" ? "none" : "strict",
             secure: process.env.NODE_ENV === "production" ? true : false,
           });
 
