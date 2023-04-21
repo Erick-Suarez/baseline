@@ -3,6 +3,7 @@
   "version": "1.1.0",
   "description": "Baseline CLI",
   "main": "dist/index.js",
+  "private": true,
   "scripts": {
     "build": "npx tsc"
   },
