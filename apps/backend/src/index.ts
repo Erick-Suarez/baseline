@@ -41,8 +41,8 @@ app.use("/data-sync", dataSyncRoute);
 app.use("/baseline", embeddingIndexRoute);
 app.use("/projects", repositoryRoute);
 
-app.get("/", (req: Request, res: Response) => {
-  res.json({ status: "OK" });
+app.get("/health", (req: Request, res: Response) => {
+  res.status(200).json({ status: "healthy" });
 });
 
 app.get("/test", authenticateToken, (req: Request, res: Response) => {

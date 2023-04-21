@@ -1,0 +1,9 @@
+# Files and directories to ignore
+node_modules
+npm-debug.log
+yarn-error.log
+*.log
+*.tsbuildinfo
+.vscode
+coverage
+dist
