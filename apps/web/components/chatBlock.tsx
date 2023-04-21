@@ -8,6 +8,7 @@ import { RiArrowDropDownLine } from "react-icons/ri";
 
 import { Prism as SyntaxHighlighter } from "react-syntax-highlighter";
 import { atomDark } from "react-syntax-highlighter/dist/cjs/styles/prism";
+import { wrap } from "module";
 
 export enum ChatBlockType {
   HUMAN = "human",
@@ -59,30 +60,36 @@ export const ChatBlock = ({
           {type === ChatBlockType.LOADING && (
             <BeatLoader size={12} color={"#818cf8"} />
           )}
-          <ReactMarkdown
-            components={{
-              code({ node, inline, className, children, ...props }) {
-                return !inline ? (
-                  <SyntaxHighlighter
-                    className="w-[100%] flex-shrink"
-                    language={"javascript"}
-                    wrapLines={true}
-                    showLineNumbers={true}
-                    PreTag="div"
-                    style={atomDark}
-                  >
-                    {String(children).replace(/\n$/, "")}
-                  </SyntaxHighlighter>
-                ) : (
-                  <code className={className} {...props}>
-                    {children}
-                  </code>
-                );
-              },
-            }}
-          >
-            {content}
-          </ReactMarkdown>
+          {type === ChatBlockType.AI && (
+            <ReactMarkdown
+              components={{
+                code({ node, inline, className, children, ...props }) {
+                  return !inline ? (
+                    <SyntaxHighlighter
+                      className="w-[100%] flex-shrink"
+                      language={"javascript"}
+                      wrapLines={true}
+                      showLineNumbers={true}
+                      PreTag="div"
+                      style={atomDark}
+                    >
+                      {String(children).replace(/\n$/, "")}
+                    </SyntaxHighlighter>
+                  ) : (
+                    <code className={className} {...props}>
+                      {children}
+                    </code>
+                  );
+                },
+              }}
+            >
+              {content}
+            </ReactMarkdown>
+          )}
+          {type === ChatBlockType.HUMAN && (
+            <div className="whitespace-pre-wrap">{content}</div>
+          )}
+
           {sources && sources.length > 0 && <Sources sources={sources} />}
         </div>
       </div>
