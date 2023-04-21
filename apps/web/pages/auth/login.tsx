@@ -4,7 +4,7 @@ import type {
 } from "next";
 import { getProviders, signIn } from "next-auth/react";
 import { getServerSession } from "next-auth/next";
-import { authOptions } from "@/pages/api/auth/[...nextauth]";
+import { nextAuthOptions } from "@/pages/api/auth/[...nextauth]";
 import { useState } from "react";
 import Head from "next/head";
 import { useRouter } from "next/router";
@@ -87,13 +87,17 @@ export default function Loginpage({
 }
 
 export async function getServerSideProps(context: GetServerSidePropsContext) {
-  const session = await getServerSession(context.req, context.res, authOptions);
+  const session = await getServerSession(
+    context.req,
+    context.res,
+    nextAuthOptions(context.req, context.res)
+  );
 
   // If the user is already logged in, redirect.
   // Note: Make sure not to redirect to the same page
   // To avoid an infinite loop!
   if (session) {
-    return { redirect: { destination: "/chat" } };
+    return { redirect: { destination: "/manageData" } };
   }
 
   const providers = await getProviders();

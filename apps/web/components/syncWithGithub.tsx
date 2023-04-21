@@ -30,7 +30,7 @@ export const SyncWithGithubButton = ({
 
     if (resyncConfirm) {
       // Start resync process
-      fetch("http://localhost:3000/data-sync", {
+      fetch(`${process.env.NEXT_PUBLIC_BASELINE_SERVER_URL}/data-sync`, {
         method: "DELETE",
         headers: {
           "Content-Type": "application/json",
@@ -39,6 +39,7 @@ export const SyncWithGithubButton = ({
           source: "github",
           organization_id,
         }),
+        credentials: "include",
       }).then(() => {
         // Reload on success
         onSync({ github: false });

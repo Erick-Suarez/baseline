@@ -1,3 +1,4 @@
+import { authenticateToken } from "../controllers/authController.js";
 import {
   deleteDataSync,
   getDataSyncsForOrganization,
@@ -5,6 +6,8 @@ import {
 import express, { Router } from "express";
 
 const router: Router = express.Router();
+
+router.use(authenticateToken);
 
 router.get("/:organization_id", getDataSyncsForOrganization);
 

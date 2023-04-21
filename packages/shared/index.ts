@@ -73,3 +73,8 @@ export interface Project {
 export interface deleteEmbeddingFromRepositoryRequest {
   repo_id: string;
 }
+
+export interface UserJWTPayload {
+  user_id: string;
+  organization_id: string;
+}

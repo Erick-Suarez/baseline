@@ -16,6 +16,10 @@ import {
 } from "@baselinedocs/shared";
 import { createGithubDataSyncForOrganization } from "./controllers/dataSyncController.js";
 import { DefaultChatQAModel } from "./lib/models/defaultQA.js";
+import {
+  AuthenticatedRequest,
+  authenticateToken,
+} from "./controllers/authController.js";
 
 dotenv.config();
 const port = 3000;
@@ -25,7 +29,12 @@ const app: Express = express();
 // Configure Middleware
 app.use(express.json());
 app.use(morganMiddleware);
-app.use(cors());
+app.use(
+  cors({
+    origin: ["http://localhost:5173"],
+    credentials: true,
+  })
+);
 
 // Configure Routes
 app.use("/data-sync", dataSyncRoute);
@@ -36,8 +45,14 @@ app.get("/", (req: Request, res: Response) => {
   res.json({ status: "OK" });
 });
 
+app.get("/test", authenticateToken, (req: Request, res: Response) => {
+  const authenticatedRequest = req as AuthenticatedRequest;
+  console.log(authenticatedRequest.user);
+  console.log("hit test");
+  res.status(200).json({ status: "Authenticated" });
+});
+
 // Handle the callback from the GitHub OAuth authorization page
-// TODO: Add to route file
 app.get("/auth/github/callback", async (req, res) => {
   if (!req.query.state || !req.query.code) {
     console.error("Missing query params from github oauth callback");

@@ -1,8 +1,10 @@
+/* eslint-disable react-hooks/exhaustive-deps */
+
 import { BaselineContext } from "@/context/baselineContext";
 import "@/styles/globals.css";
 import type { AppProps } from "next/app";
 import { Children, cloneElement, useContext, useEffect, useState } from "react";
-import { SessionProvider, useSession } from "next-auth/react";
+import { SessionProvider, signOut, useSession } from "next-auth/react";
 import { DataSyncs } from "@/types/project";
 import {
   geRepositoriesWithEmbeddingsForOrganizationIdResponse,
@@ -54,18 +56,22 @@ const _ComponentWithSession = (props: any) => {
   const router = useRouter();
   const { dataSyncs, setProjects, setCurrentProject, setDataSyncs } =
     useContext(BaselineContext);
+  const [fetchInProgress, setFetchInProgress] = useState<boolean>(false);
 
   useEffect(() => {
-    let timeoutId: NodeJS.Timeout;
+    let interval: NodeJS.Timer;
     const fetchProjects = () => {
-      if (session.data) {
+      if (session.data && !fetchInProgress) {
+        setFetchInProgress(true);
         fetch(
-          `http://localhost:3000/projects/${session.data.user.organization.organization_id}`
+          `${process.env.NEXT_PUBLIC_BASELINE_SERVER_URL}/projects/${session.data.user.organization.organization_id}`,
+          { method: "GET", credentials: "include" }
         )
           .then((res) => res.json())
           .then(
             (data: geRepositoriesWithEmbeddingsForOrganizationIdResponse) => {
               const projects: Array<Project> = [];
+
               data.forEach((repo) => {
                 projects.push({
                   id: repo.repo_id,
@@ -77,42 +83,39 @@ const _ComponentWithSession = (props: any) => {
               });
 
               setProjects([...projects, defaultGPTProject]);
+
               if (projects.length === 0) {
                 setCurrentProject(null);
-              }
-
-              if (router.asPath === "/manageData") {
-                timeoutId = setTimeout(fetchProjects, 10000);
               }
             }
           )
           .catch((err) => {
             console.error(err);
+          })
+          .finally(() => {
+            setFetchInProgress(false);
           });
       }
     };
 
-    fetchProjects();
+    if (router.asPath === "/manageData") {
+      interval = setInterval(fetchProjects, 2000);
+    }
 
-    return () => clearTimeout(timeoutId);
-  }, [
-    dataSyncs,
-    session.data,
-    setCurrentProject,
-    setProjects,
-    router.asPath,
-    props.refresh,
-  ]);
+    return () => clearInterval(interval);
+  }, [dataSyncs, router.asPath, session.data, setCurrentProject, setProjects]);
 
   useEffect(() => {
     if (session.data) {
       fetch(
-        `http://localhost:3000/data-sync/${session.data.user.organization.organization_id}`
+        `${process.env.NEXT_PUBLIC_BASELINE_SERVER_URL}/data-sync/${session.data.user.organization.organization_id}`,
+        { method: "GET", credentials: "include" }
       )
         .then((res) => res.json())
-        .then((data: getDataSyncsForOrganizationResponse) =>
-          setDataSyncs(data)
-        );
+        .then((data: getDataSyncsForOrganizationResponse) => setDataSyncs(data))
+        .catch((err) => {
+          //TODO: Handle error
+        });
     }
   }, [session.data, setDataSyncs]);
   const clonedChild = cloneElement(Children.only(props.children), props);

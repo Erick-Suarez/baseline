@@ -96,13 +96,17 @@ export const ProjectDataTable = ({
                                       repo_id: project.id,
                                     };
 
-                                  fetch("http://localhost:3000/baseline", {
-                                    method: "POST",
-                                    headers: {
-                                      "Content-Type": "application/json",
-                                    },
-                                    body: JSON.stringify(payload),
-                                  })
+                                  fetch(
+                                    `${process.env.NEXT_PUBLIC_BASELINE_SERVER_URL}/baseline`,
+                                    {
+                                      method: "POST",
+                                      headers: {
+                                        "Content-Type": "application/json",
+                                      },
+                                      body: JSON.stringify(payload),
+                                      credentials: "include",
+                                    }
+                                  )
                                     .then((res) => res.json())
                                     .then((data) => {
                                       forceRefresh();
@@ -119,15 +123,19 @@ export const ProjectDataTable = ({
                             return (
                               <button
                                 onClick={() => {
-                                  fetch("http://localhost:3000/baseline", {
-                                    method: "DELETE",
-                                    headers: {
-                                      "Content-Type": "application/json",
-                                    },
-                                    body: JSON.stringify({
-                                      repo_id: project.id,
-                                    }),
-                                  })
+                                  fetch(
+                                    `${process.env.NEXT_PUBLIC_BASELINE_SERVER_URL}/baseline`,
+                                    {
+                                      method: "DELETE",
+                                      headers: {
+                                        "Content-Type": "application/json",
+                                      },
+                                      body: JSON.stringify({
+                                        repo_id: project.id,
+                                      }),
+                                      credentials: "include",
+                                    }
+                                  )
                                     .then((res) => res.json())
                                     .then((data) => {
                                       forceRefresh();

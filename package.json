@@ -14,5 +14,8 @@
     "dev-web": "lerna run dev --scope @baslinedocs/baseline-web-next --stream",
     "build": "npm i && npx lerna run build --ignore @baslinedocs/baseline-web-next && npx lerna bootstrap",
     "dev": "npm run build && concurrently \"npm run dev-server\" \"npm run dev-web\""
+  },
+  "dependencies": {
+    "@types/jsonwebtoken": "^9.0.1"
   }
 }

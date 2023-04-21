@@ -66,7 +66,7 @@ export const Chat = () => {
     if (!currentProject) {
       router.push("/manageData");
     }
-    const socket = io("http://localhost:3000");
+    const socket = io(`${process.env.NEXT_PUBLIC_BASELINE_SERVER_URL}`);
     setSocketConnection(socket);
     socket.emit("initialize-chat", currentProject);
 
