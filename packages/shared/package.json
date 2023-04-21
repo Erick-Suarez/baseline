@@ -15,5 +15,8 @@
     "nodemon": "^2.0.22",
     "typescript": "^5.0.2"
   },
-  "type": "module"
+  "type": "module",
+  "publishConfig": {
+    "access": "public"
+  }
 }
