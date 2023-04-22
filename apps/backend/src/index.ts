@@ -1,6 +1,5 @@
 import express, { Express, Request, Response, NextFunction } from "express";
 import { BaselineChatQAModel } from "./lib/models/baselineQA.js";
-import * as dotenv from "dotenv";
 import morganMiddleware from "./config/morganMiddleware.js";
 import http from "http";
 import { Server } from "socket.io";
@@ -21,7 +20,6 @@ import {
   authenticateToken,
 } from "./controllers/authController.js";
 
-dotenv.config();
 const port = 3000;
 
 const app: Express = express();
@@ -97,6 +95,10 @@ io.on("connection", (socket) => {
   };
 
   let baselineQAModel: BaselineChatQAModel | DefaultChatQAModel;
+
+  socket.on("health", () => {
+    socket.emit("health-response", { staus: "healthy" });
+  });
 
   socket.on("initialize-chat", (data: Project) => {
     // Initialize new BaselineQAModel using project data

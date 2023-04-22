@@ -6,13 +6,10 @@ import { PineconeStore } from "langchain/vectorstores/pinecone";
 import { CallbackManager } from "langchain/callbacks";
 import chalk from "chalk";
 import { PromptTemplate } from "langchain/prompts";
-import * as dotenv from "dotenv";
-import { filepath, MarkdownContent } from "@baselinedocs/shared";
+import { MarkdownContent } from "@baselinedocs/shared";
 import { ChainValues } from "langchain/schema";
 import { Document } from "langchain/document";
 import { encode } from "gpt-3-encoder";
-
-dotenv.config();
 
 const DefaultSummationPrompt = `
 Given a chat_history between an AI and a human, along with an original_query, please extract and analyze the relevant information from the chat_history. Create a new, standalone query that captures the essence of the original_query without relying on the chat_history. This new query will be used to find similar embeddings of code files to retrieve relevant code examples. Disregard any non-relevant parts of the chat_history. If the original_query is a question, do not answer it, but instead, form a new, standalone question that maintains the same meaning as the original_query.

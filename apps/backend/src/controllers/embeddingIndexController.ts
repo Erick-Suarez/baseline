@@ -1,5 +1,4 @@
-import express, { Express, Request, Response } from "express";
-import * as dotenv from "dotenv";
+import { Request, Response } from "express";
 import {
   createEmbeddingFromRepositoryRequest,
   deleteEmbeddingFromRepositoryRequest,
@@ -7,11 +6,8 @@ import {
 import { fork } from "child_process";
 import { supabase } from "../lib/supabase.js";
 import { downloadRepository } from "../lib/github.js";
-import chalk from "chalk";
 import { deleteIndex, startIngestion } from "../lib/pinecone.js";
 import fs from "fs";
-
-dotenv.config();
 
 interface DataSyncAccessTokenFromRepositoryModel {
   access_token_data: {

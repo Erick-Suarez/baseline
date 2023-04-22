@@ -1,8 +1,5 @@
-import express, { Request, Response } from "express";
+import { Request, Response } from "express";
 import { authGithub, getRepositories } from "../lib/github.js";
-import * as dotenv from "dotenv";
-import { createClient } from "@supabase/supabase-js";
-import chalk from "chalk";
 import {
   DATA_SYNC_SOURCES,
   deleteDataSyncRequest,
@@ -11,8 +8,6 @@ import {
 } from "@baselinedocs/shared";
 import { supabase } from "../lib/supabase.js";
 import { deleteIndex } from "../lib/pinecone.js";
-
-dotenv.config();
 
 // Sync Github Repositories to the Database by organization_id
 // Returns object with error value set to null on succes

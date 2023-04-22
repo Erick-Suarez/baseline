@@ -1,12 +1,8 @@
 import { ChatOpenAI } from "langchain/chat_models/openai";
 import { LLMChain } from "langchain/chains";
 import { CallbackManager } from "langchain/callbacks";
-import chalk from "chalk";
 import { PromptTemplate } from "langchain/prompts";
-import * as dotenv from "dotenv";
 import { MarkdownContent } from "@baselinedocs/shared";
-
-dotenv.config();
 
 const DefaultQAPrompt = `
 Given a chat_history and a query, please provide a detailed response that simulates the behavior of a ChatGPT model. Ensure your response is relevant, informative, and based on the context provided in the chat_history.
@@ -15,7 +11,7 @@ chat_history:
 {chat_history}
 
 
-query: 
+query:
 {query}
 
 response:
@@ -57,7 +53,7 @@ export class DefaultChatQAModel {
   private _addToChatHistory(query: string, response: string) {
     this.chatHistory.push(`
     Human: ${query}
-    
+
     AI:${response}
     `);
   }
