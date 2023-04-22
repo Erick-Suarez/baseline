@@ -31,4 +31,4 @@ CMD ["npm", "start"]
 # docker build -t baseline-backend:$current_date .
 
 # Docker run container
-# docker run -p 3000:3000 baseline-backend:$current_date
+# docker run --env-file .env.development -p 3000:3000 baseline-backend:$current_date
