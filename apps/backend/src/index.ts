@@ -29,7 +29,7 @@ app.use(express.json());
 app.use(morganMiddleware);
 app.use(
   cors({
-    origin: ["http://localhost:5173"],
+    origin: [process.env.BASELINE_FRONTEND_URL || "http://localhost:5173"],
     credentials: true,
   })
 );
@@ -71,7 +71,7 @@ app.get("/auth/github/callback", async (req, res) => {
   }
 
   // redirect the user back to the manageData page
-  res.redirect("http://localhost:5173/manageData");
+  res.redirect(`${process.env.BASELINE_FRONTEND_URL}/manageData`);
 });
 
 // error handler
@@ -85,7 +85,9 @@ app.use(function (err: any, req: Request, res: Response, next: NextFunction) {
 });
 
 const server = http.createServer(app);
-const io = new Server(server, { cors: { origin: "http://localhost:5173" } });
+const io = new Server(server, {
+  cors: { origin: process.env.BASELINE_FRONTEND_URL },
+});
 
 io.on("connection", (socket) => {
   console.log(`New client connection: ${socket.id}`);
