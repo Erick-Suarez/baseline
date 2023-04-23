@@ -53,7 +53,7 @@ app.get("/test", authenticateToken, (req: Request, res: Response) => {
 // Handle the callback from the GitHub OAuth authorization page
 app.get("/auth/github/callback", async (req, res) => {
   if (!req.query.state || !req.query.code) {
-    console.error("Missing query params from github oauth callback");
+    console.error("Missing query params from github oauth callback", req.query);
     return res.status(400).json({ message: "Missing query params" });
   }
 

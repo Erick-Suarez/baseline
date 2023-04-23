@@ -64,7 +64,7 @@ const _ComponentWithSession = (props: any) => {
       if (session.data && !fetchInProgress) {
         setFetchInProgress(true);
         fetch(
-          `${process.env.BASELINE_BACKEND_URL}/projects/${session.data.user.organization.organization_id}`,
+          `${process.env.NEXT_PUBLIC_BASELINE_BACKEND_URL}/projects/${session.data.user.organization.organization_id}`,
           { method: "GET", credentials: "include" }
         )
           .then((res) => res.json())
@@ -108,7 +108,7 @@ const _ComponentWithSession = (props: any) => {
   useEffect(() => {
     if (session.data) {
       fetch(
-        `${process.env.BASELINE_BACKEND_URL}/data-sync/${session.data.user.organization.organization_id}`,
+        `${process.env.NEXT_PUBLIC_BASELINE_BACKEND_URL}/data-sync/${session.data.user.organization.organization_id}`,
         { method: "GET", credentials: "include" }
       )
         .then((res) => res.json())

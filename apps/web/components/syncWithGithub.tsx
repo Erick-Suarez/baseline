@@ -30,7 +30,7 @@ export const SyncWithGithubButton = ({
 
     if (resyncConfirm) {
       // Start resync process
-      fetch(`${process.env.BASELINE_BACKEND_URL}/data-sync`, {
+      fetch(`${process.env.NEXT_PUBLIC_BASELINE_BACKEND_URL}/data-sync`, {
         method: "DELETE",
         headers: {
           "Content-Type": "application/json",
