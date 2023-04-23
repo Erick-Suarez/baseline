@@ -97,7 +97,7 @@ export const ProjectDataTable = ({
                                     };
 
                                   fetch(
-                                    `${process.env.NEXT_PUBLIC_BASELINE_SERVER_URL}/baseline`,
+                                    `${process.env.BASELINE_BACKEND_URL}/baseline`,
                                     {
                                       method: "POST",
                                       headers: {
@@ -124,7 +124,7 @@ export const ProjectDataTable = ({
                               <button
                                 onClick={() => {
                                   fetch(
-                                    `${process.env.NEXT_PUBLIC_BASELINE_SERVER_URL}/baseline`,
+                                    `${process.env.BASELINE_BACKEND_URL}/baseline`,
                                     {
                                       method: "DELETE",
                                       headers: {
