@@ -19,7 +19,7 @@ export async function authenticateToken(
   next: NextFunction
 ) {
   const parsedCookies = parseCookies({ req });
-  // console.log(parsedCookies);
+
   const accessToken = parsedCookies["baseline.access-token"] as
     | string
     | undefined;

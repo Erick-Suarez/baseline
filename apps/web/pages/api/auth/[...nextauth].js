@@ -69,12 +69,9 @@ export const nextAuthOptions = (req, res) => {
             organization_id: data[0].organization_members[0].organization_id,
           };
 
-          console.log("user from supabase: ", user);
-
           const accessToken = jwt.sign(user, process.env.JWT_SECRET, {
             expiresIn: "1d",
           });
-          console.log("accessToken set to: ", accessToken);
 
           setCookie({ res }, "baseline.access-token", accessToken, {
             maxAge: 60 * 60 * 24,
@@ -83,7 +80,6 @@ export const nextAuthOptions = (req, res) => {
             sameSite: process.env.NODE_ENV === "production" ? "none" : "strict",
             secure: process.env.NODE_ENV === "production" ? true : false,
           });
-          console.log("cookied set");
           return data[0];
         },
       }),
