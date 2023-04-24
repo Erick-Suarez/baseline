@@ -1,6 +1,9 @@
 import { NextFunction, Request, Response } from "express";
 import { parseCookies } from "nookies";
 import * as jwt from "jsonwebtoken";
+import * as dotenv from "dotenv";
+
+dotenv.config();
 
 export interface AuthenticatedRequest extends Request {
   user: User;
@@ -16,7 +19,7 @@ export async function authenticateToken(
   next: NextFunction
 ) {
   const parsedCookies = parseCookies({ req });
-
+  // console.log(parsedCookies);
   const accessToken = parsedCookies["baseline.access-token"] as
     | string
     | undefined;

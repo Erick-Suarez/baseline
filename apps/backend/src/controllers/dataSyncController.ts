@@ -8,6 +8,9 @@ import {
 } from "@baselinedocs/shared";
 import { supabase } from "../lib/supabase.js";
 import { deleteIndex } from "../lib/pinecone.js";
+import * as dotenv from "dotenv";
+
+dotenv.config();
 
 // Sync Github Repositories to the Database by organization_id
 // Returns object with error value set to null on succes

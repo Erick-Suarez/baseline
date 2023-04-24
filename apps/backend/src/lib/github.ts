@@ -1,5 +1,4 @@
 import tar from "tar";
-import { Repositories } from "@baselinedocs/shared";
 import { Octokit } from "@octokit/core";
 import _ from "lodash";
 import fs from "fs";

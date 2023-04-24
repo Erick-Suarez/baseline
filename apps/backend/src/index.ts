@@ -19,6 +19,9 @@ import {
   AuthenticatedRequest,
   authenticateToken,
 } from "./controllers/authController.js";
+import * as dotenv from "dotenv";
+
+dotenv.config();
 
 const port = 3000;
 
@@ -29,7 +32,9 @@ app.use(express.json());
 app.use(morganMiddleware);
 app.use(
   cors({
-    origin: [process.env.BASELINE_FRONTEND_URL || "http://localhost:5173"],
+    origin: new RegExp(
+      process.env.BASELINE_FRONTEND_REGEX || /https:\/\/app\.baselinedocs\.com$/
+    ),
     credentials: true,
   })
 );

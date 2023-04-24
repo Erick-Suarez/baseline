@@ -8,6 +8,9 @@ import { supabase } from "../lib/supabase.js";
 import { downloadRepository } from "../lib/github.js";
 import { deleteIndex, startIngestion } from "../lib/pinecone.js";
 import fs from "fs";
+import * as dotenv from "dotenv";
+
+dotenv.config();
 
 interface DataSyncAccessTokenFromRepositoryModel {
   access_token_data: {

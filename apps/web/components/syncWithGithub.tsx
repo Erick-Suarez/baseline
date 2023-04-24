@@ -14,8 +14,7 @@ export const SyncWithGithubButton = ({
   onSync: (arg: DataSyncs) => void;
 }) => {
   const { setDataSyncs } = useContext(BaselineContext);
-  const clientId = "7f87d72bbee3e1f28624";
-
+  const clientId = process.env.NEXT_PUBLIC_GITHUB_CLIENT_ID;
   // Create state to persist between calls to the backend
   const stateObj = encodeURIComponent(
     JSON.stringify({
@@ -46,7 +45,6 @@ export const SyncWithGithubButton = ({
       });
     }
   }
-
   return (
     <button
       onClick={() => {
@@ -54,6 +52,7 @@ export const SyncWithGithubButton = ({
           setDataSyncs({ github: true });
           _resyncGithub(organization_id);
         } else {
+          console.log(process.env);
           window.location.href = `https://github.com/login/oauth/authorize?state=${stateObj}&client_id=${clientId}&scope=repo&prompt=select_account`;
         }
       }}

@@ -3,6 +3,9 @@ import { LLMChain } from "langchain/chains";
 import { CallbackManager } from "langchain/callbacks";
 import { PromptTemplate } from "langchain/prompts";
 import { MarkdownContent } from "@baselinedocs/shared";
+import * as dotenv from "dotenv";
+
+dotenv.config();
 
 const DefaultQAPrompt = `
 Given a chat_history and a query, please provide a detailed response that simulates the behavior of a ChatGPT model. Ensure your response is relevant, informative, and based on the context provided in the chat_history.
