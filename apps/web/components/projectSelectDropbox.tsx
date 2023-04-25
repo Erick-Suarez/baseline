@@ -19,7 +19,6 @@ export const ProjectSelectDropbox = () => {
     <Listbox
       value={currentProject}
       onChange={(value) => {
-        console.log("changing");
         setCurrentProject(value);
       }}
     >

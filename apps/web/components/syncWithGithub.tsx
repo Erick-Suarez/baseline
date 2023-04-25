@@ -11,7 +11,7 @@ export const SyncWithGithubButton = ({
   onSync,
 }: {
   alreadySynced?: boolean;
-  organization_id: number;
+  organization_id: string;
   onSync: (arg: DataSyncs) => void;
 }) => {
   const { setDataSyncs } = useContext(BaselineContext);
@@ -23,7 +23,7 @@ export const SyncWithGithubButton = ({
     })
   );
 
-  function _resyncGithub(organization_id: number) {
+  function _resyncGithub(organization_id: string) {
     const resyncConfirm = window.confirm(
       "Are you sure you want to resync Github? This will delete all current Github repositories"
     );
@@ -53,7 +53,6 @@ export const SyncWithGithubButton = ({
           setDataSyncs({ github: true });
           _resyncGithub(organization_id);
         } else {
-          console.log(process.env);
           window.location.href = `https://github.com/login/oauth/authorize?state=${stateObj}&client_id=${clientId}&scope=repo&prompt=select_account`;
         }
       }}

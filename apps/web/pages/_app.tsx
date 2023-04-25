@@ -1,10 +1,13 @@
-/* eslint-disable react-hooks/exhaustive-deps */
-
 import { BaselineContext } from "@/context/baselineContext";
 import "@/styles/globals.css";
 import type { AppProps } from "next/app";
 import { Children, cloneElement, useContext, useEffect, useState } from "react";
-import { SessionProvider, signOut, useSession } from "next-auth/react";
+import {
+  SessionProvider,
+  getSession,
+  signOut,
+  useSession,
+} from "next-auth/react";
 import { DataSyncs } from "@/types/project";
 import {
   geRepositoriesWithEmbeddingsForOrganizationIdResponse,
@@ -13,8 +16,11 @@ import {
 } from "@baselinedocs/shared";
 import { useRouter } from "next/router";
 import { parseCookies } from "nookies";
+import { PageWithSidebar } from "@/components/layouts/pageWithSidebar";
+import { GetServerSideProps, GetServerSidePropsContext } from "next/types";
+import { Session } from "next-auth";
 
-const defaultGPTProject: Project = {
+export const defaultGPTProject: Project = {
   id: "-1",
   name: "Default GPT",
   display_name: "Default GPT",
@@ -22,7 +28,14 @@ const defaultGPTProject: Project = {
   index_list: [],
 };
 
-export default function App({ Component, pageProps }: AppProps) {
+// Set the path of the pages here that should be rendered with a sidebar
+const PAGE_PATHS_WITH_SIDEBAR = ["/chat", "/manageData"];
+
+export default function App({
+  Component,
+  pageProps,
+  router,
+}: AppProps & { session: Session }) {
   const [currentProject, setCurrentProject] = useState<Project | null>(null);
   const [projects, setProjects] = useState<Array<Project>>([defaultGPTProject]);
   const [dataSyncs, setDataSyncs] = useState<DataSyncs>({
@@ -30,6 +43,18 @@ export default function App({ Component, pageProps }: AppProps) {
   });
 
   const [refresh, setRefresh] = useState(false);
+
+  let componentToRender;
+
+  if (PAGE_PATHS_WITH_SIDEBAR.includes(router.pathname)) {
+    componentToRender = (
+      <PageWithSidebar>
+        <Component {...pageProps} />
+      </PageWithSidebar>
+    );
+  } else {
+    componentToRender = <Component {...pageProps} />;
+  }
 
   return (
     <SessionProvider session={pageProps.session}>
@@ -41,96 +66,12 @@ export default function App({ Component, pageProps }: AppProps) {
           setProjects,
           dataSyncs,
           setDataSyncs,
+          refreshDep: refresh,
           forceRefresh: () => setRefresh((prev) => !prev),
         }}
       >
-        <_ComponentWithSession refresh={refresh}>
-          <Component {...pageProps} />
-        </_ComponentWithSession>
+        {componentToRender}
       </BaselineContext.Provider>
     </SessionProvider>
   );
 }
-
-const _ComponentWithSession = (props: any) => {
-  const session = useSession();
-  const router = useRouter();
-  const { dataSyncs, setProjects, setCurrentProject, setDataSyncs } =
-    useContext(BaselineContext);
-  const [fetchInProgress, setFetchInProgress] = useState<boolean>(false);
-
-  useEffect(() => {
-    let interval: NodeJS.Timer;
-    const fetchProjects = () => {
-      if (session.data && !fetchInProgress) {
-        setFetchInProgress(true);
-        fetch(
-          `${process.env.NEXT_PUBLIC_BASELINE_BACKEND_URL}/projects/${session.data.user.organization.organization_id}`,
-          {
-            method: "GET",
-            headers: {
-              Authorization: `BEARER ${
-                parseCookies()["baseline.access-token"]
-              }`,
-            },
-          }
-        )
-          .then((res) => res.json())
-          .then(
-            (data: geRepositoriesWithEmbeddingsForOrganizationIdResponse) => {
-              const projects: Array<Project> = [];
-
-              data.forEach((repo) => {
-                projects.push({
-                  id: repo.repo_id,
-                  name: repo.repo_name,
-                  display_name: repo.full_name,
-                  source: repo.data_syncs.source,
-                  index_list: repo.embedding_indexes,
-                });
-              });
-
-              setProjects([...projects, defaultGPTProject]);
-
-              if (projects.length === 0) {
-                setCurrentProject(null);
-              }
-            }
-          )
-          .catch((err) => {
-            console.error(err);
-          })
-          .finally(() => {
-            setFetchInProgress(false);
-          });
-      }
-    };
-
-    if (router.asPath === "/manageData") {
-      interval = setInterval(fetchProjects, 2000);
-    }
-
-    return () => clearInterval(interval);
-  }, [dataSyncs, router.asPath, session.data, setCurrentProject, setProjects]);
-
-  useEffect(() => {
-    if (session.data) {
-      fetch(
-        `${process.env.NEXT_PUBLIC_BASELINE_BACKEND_URL}/data-sync/${session.data.user.organization.organization_id}`,
-        {
-          method: "GET",
-          headers: {
-            Authorization: `BEARER ${parseCookies()["baseline.access-token"]}`,
-          },
-        }
-      )
-        .then((res) => res.json())
-        .then((data: getDataSyncsForOrganizationResponse) => setDataSyncs(data))
-        .catch((err) => {
-          //TODO: Handle error
-        });
-    }
-  }, [session.data, setDataSyncs]);
-  const clonedChild = cloneElement(Children.only(props.children), props);
-  return <div>{clonedChild}</div>;
-};

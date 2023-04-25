@@ -13,7 +13,7 @@ declare module "next-auth" {
       image: string | null;
       name: string;
       organization: {
-        organization_id: number;
+        organization_id: string;
         organization_name: string;
       };
     } & DefaultSession["user"];

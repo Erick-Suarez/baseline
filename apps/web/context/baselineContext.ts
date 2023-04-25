@@ -9,6 +9,7 @@ export const BaselineContext = createContext<{
   setProjects: React.Dispatch<React.SetStateAction<Array<Project>>>;
   dataSyncs: DataSyncs;
   setDataSyncs: React.Dispatch<React.SetStateAction<DataSyncs>>;
+  refreshDep: boolean; // Dependency other pages will need to subscribe to if forceRefresh() should also refresh that page
   forceRefresh: () => void;
 }>({
   currentProject: null,
@@ -17,5 +18,6 @@ export const BaselineContext = createContext<{
   setProjects: () => {},
   dataSyncs: { github: false },
   setDataSyncs: () => {},
+  refreshDep: false,
   forceRefresh: () => {},
 });
