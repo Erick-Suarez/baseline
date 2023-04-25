@@ -18,24 +18,19 @@ export async function authenticateToken(
   res: Response,
   next: NextFunction
 ) {
-  const parsedCookies = parseCookies({ req });
+  const authHeader = req.headers['authorization']
+  const token = authHeader && authHeader.split(' ')[1]
+  if (!token) return res.status(401).json({message: "No auth token"})
 
-  const accessToken = parsedCookies["baseline.access-token"] as
-    | string
-    | undefined;
-
-  if (!accessToken) {
-    return res.sendStatus(401);
-  }
-
-  jwt.verify(accessToken, process.env.JWT_SECRET!, (err, data) => {
+  jwt.verify(token, process.env.JWT_SECRET!, (err, data) => {
     if (err) {
-      return res.sendStatus(403);
+      console.log(err)
+      return res.status(403).json({message: "Forbidden"})
     }
 
-    const authenticatedRequest = req as AuthenticatedRequest;
+     const authenticatedRequest = req as AuthenticatedRequest;
     authenticatedRequest.user = data as User;
 
-    next();
-  });
+    next()
+  })
 }

@@ -3,6 +3,7 @@ import classNames from "classnames";
 import { DataSyncs } from "@/types/project";
 import { useContext } from "react";
 import { BaselineContext } from "@/context/baselineContext";
+import { parseCookies } from "nookies";
 
 export const SyncWithGithubButton = ({
   alreadySynced,
@@ -33,12 +34,12 @@ export const SyncWithGithubButton = ({
         method: "DELETE",
         headers: {
           "Content-Type": "application/json",
+          Authorization: `BEARER ${parseCookies()["baseline.access-token"]}`,
         },
         body: JSON.stringify({
           source: "github",
           organization_id,
         }),
-        credentials: "include",
       }).then(() => {
         // Reload on success
         onSync({ github: false });

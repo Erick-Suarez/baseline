@@ -76,10 +76,8 @@ export const nextAuthOptions = (req, res) => {
           setCookie({ res }, "baseline.access-token", accessToken, {
             maxAge: 60 * 60 * 24,
             path: "/",
-            httpOnly: true,
-            sameSite: process.env.NODE_ENV === "production" ? "none" : "strict",
-            secure: process.env.NODE_ENV === "production" ? true : false,
           });
+
           return data[0];
         },
       }),

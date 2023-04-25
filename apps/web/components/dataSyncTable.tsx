@@ -8,6 +8,7 @@ import {
 import { Disclosure, Menu } from "@headlessui/react";
 import { RiCheckFill, RiCloseFill, RiMoreFill } from "react-icons/ri";
 import { BarLoader } from "react-spinners";
+import { parseCookies } from "nookies";
 
 export const ProjectDataTable = ({
   projects,
@@ -102,9 +103,13 @@ export const ProjectDataTable = ({
                                       method: "POST",
                                       headers: {
                                         "Content-Type": "application/json",
+                                        Authorization: `BEARER ${
+                                          parseCookies()[
+                                            "baseline.access-token"
+                                          ]
+                                        }`,
                                       },
                                       body: JSON.stringify(payload),
-                                      credentials: "include",
                                     }
                                   )
                                     .then((res) => res.json())
@@ -129,11 +134,15 @@ export const ProjectDataTable = ({
                                       method: "DELETE",
                                       headers: {
                                         "Content-Type": "application/json",
+                                        Authorization: `BEARER ${
+                                          parseCookies()[
+                                            "baseline.access-token"
+                                          ]
+                                        }`,
                                       },
                                       body: JSON.stringify({
                                         repo_id: project.id,
                                       }),
-                                      credentials: "include",
                                     }
                                   )
                                     .then((res) => res.json())

@@ -12,6 +12,7 @@ import {
   Project,
 } from "@baselinedocs/shared";
 import { useRouter } from "next/router";
+import { parseCookies } from "nookies";
 
 const defaultGPTProject: Project = {
   id: "-1",
@@ -65,7 +66,14 @@ const _ComponentWithSession = (props: any) => {
         setFetchInProgress(true);
         fetch(
           `${process.env.NEXT_PUBLIC_BASELINE_BACKEND_URL}/projects/${session.data.user.organization.organization_id}`,
-          { method: "GET", credentials: "include" }
+          {
+            method: "GET",
+            headers: {
+              Authorization: `BEARER ${
+                parseCookies()["baseline.access-token"]
+              }`,
+            },
+          }
         )
           .then((res) => res.json())
           .then(
@@ -109,7 +117,12 @@ const _ComponentWithSession = (props: any) => {
     if (session.data) {
       fetch(
         `${process.env.NEXT_PUBLIC_BASELINE_BACKEND_URL}/data-sync/${session.data.user.organization.organization_id}`,
-        { method: "GET", credentials: "include" }
+        {
+          method: "GET",
+          headers: {
+            Authorization: `BEARER ${parseCookies()["baseline.access-token"]}`,
+          },
+        }
       )
         .then((res) => res.json())
         .then((data: getDataSyncsForOrganizationResponse) => setDataSyncs(data))
