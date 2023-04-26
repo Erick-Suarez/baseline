@@ -95,7 +95,13 @@ app.use(function (err: any, req: Request, res: Response, next: NextFunction) {
 
 const server = http.createServer(app);
 const io = new Server(server, {
-  cors: { origin: process.env.BASELINE_FRONTEND_URL },
+  cors: {
+    origin: new RegExp(
+      process.env.BASELINE_FRONTEND_REGEX ||
+        /^https?:\/\/(?:www.)?app.baselinedocs.com$/,
+      "i"
+    ),
+  },
 });
 
 io.on("connection", (socket) => {
