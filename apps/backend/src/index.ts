@@ -33,7 +33,9 @@ app.use(morganMiddleware);
 app.use(
   cors({
     origin: new RegExp(
-      process.env.BASELINE_FRONTEND_REGEX || /https:\/\/app\.baselinedocs\.com$/
+      process.env.BASELINE_FRONTEND_REGEX ||
+        /^https?:\/\/(?:www.)?app.baselinedocs.com$/,
+      "i"
     ),
     credentials: true,
   })
