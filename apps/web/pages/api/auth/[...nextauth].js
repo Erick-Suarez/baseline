@@ -88,6 +88,8 @@ export const nextAuthOptions = (req, res) => {
             expiresIn: "1d",
           });
 
+          // IMPORTANT Make this cookie have the same maxAge as the expire value in the accessToken above
+          // If they are different then the client and server will be out of sync in serving requests to the user
           setCookie({ res }, "baseline.access-token", accessToken, {
             maxAge: 60 * 60 * 24,
             path: "/",

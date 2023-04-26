@@ -14,6 +14,7 @@ import { ChatBlock, ChatBlockType } from "@/components/chatBlock";
 import { BaselineContext } from "@/context/baselineContext";
 import assert from "assert";
 import { useRouter } from "next/router";
+import { parseCookies } from "nookies";
 
 interface ChatEntry {
   type: ChatBlockType;
@@ -69,7 +70,10 @@ export const Chat = ({ loggedInUser }: { loggedInUser: { name: string } }) => {
     }
     const socket = io(`${process.env.NEXT_PUBLIC_BASELINE_BACKEND_URL}`);
     setSocketConnection(socket);
-    socket.emit("initialize-chat", currentProject);
+    socket.emit("auth", {
+      token: parseCookies()["baseline.access-token"],
+      currentProject,
+    });
 
     return () => {
       socket.close();

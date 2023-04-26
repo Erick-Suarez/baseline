@@ -19,6 +19,8 @@ import {
   AuthenticatedRequest,
   authenticateToken,
 } from "./controllers/authController.js";
+import * as jwt from "jsonwebtoken";
+
 import * as dotenv from "dotenv";
 
 dotenv.config();
@@ -104,29 +106,56 @@ io.on("connection", (socket) => {
   };
 
   let baselineQAModel: BaselineChatQAModel | DefaultChatQAModel;
+  let authenticated = false;
+
+  socket.on(
+    "auth",
+    ({ token, currentProject }: { token: string; currentProject: Project }) => {
+      if (token && currentProject) {
+        jwt.verify(token, process.env.JWT_SECRET!, (err, data) => {
+          if (err || !data) {
+            console.log(err);
+          } else {
+            data = data as jwt.JwtPayload;
+
+            console.log(`client: ${socket.id} authenticated`);
+            authenticated = true;
+
+            const currentTime = Math.floor(Date.now() / 1000); // Convert to seconds
+            const remainingTime = (data.exp! - currentTime) * 1000; // Convert to milliseconds
+
+            // Disconnect this socket once the jwt expires
+            setTimeout(() => socket.disconnect(), remainingTime);
+
+            // Initialize new BaselineQAModel using project data
+            if (currentProject.id == "-1") {
+              // Initialize Default GPT
+              baselineQAModel = new DefaultChatQAModel({ newTokenHandler });
+            } else {
+              baselineQAModel = new BaselineChatQAModel({
+                newTokenHandler,
+                indexName: currentProject.index_list[0].index_name,
+              });
+            }
+
+            console.log("Baseline model initialized");
+          }
+        });
+      }
+    }
+  );
 
   socket.on("health", () => {
     socket.emit("health-response", { staus: "healthy" });
   });
 
-  socket.on("initialize-chat", (data: Project) => {
-    // Initialize new BaselineQAModel using project data
-    if (data) {
-      if (data.id == "-1") {
-        // Initialize Default GPT
-        baselineQAModel = new DefaultChatQAModel({ newTokenHandler });
-      } else {
-        baselineQAModel = new BaselineChatQAModel({
-          newTokenHandler,
-          indexName: data.index_list[0].index_name,
-        });
-      }
-
-      console.log("Baseline model initialized");
-    }
-  });
-
   socket.on("query-request", async (data: ServerAIQueryRequest) => {
+    if (!authenticated) {
+      console.log(
+        `client ${socket.id} tried to make request: query-request, but is not authorized`
+      );
+      return;
+    }
     console.log(
       `Query request received for client ${socket.id}: ${data.query}`
     );
