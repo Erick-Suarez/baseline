@@ -29,9 +29,9 @@ export function createHumanProfileFromName(
   return (
     <div
       className={classNames(
-        "mb-5 flex items-center justify-center rounded-full bg-amber-400 text-xl font-semibold tracking-tighter text-white",
+        "mb-5 flex items-center justify-center overflow-hidden rounded-full bg-amber-400 text-xl font-semibold text-amber-800",
         { "h-32 w-32": size === profileImageSizes.LARGE },
-        { "h-12 w-12": size === profileImageSizes.SMALL }
+        { "h-12 w-12 min-w-[48px]": size === profileImageSizes.SMALL }
       )}
     >
       {displayName}
