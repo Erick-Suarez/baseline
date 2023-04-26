@@ -88,7 +88,7 @@ export default function ManageDataPage({}: {}) {
     if (session.data && session.status === "authenticated") {
       interval = setInterval(() => {
         fetchProjects(session.data.user.organization.organization_id);
-      }, 2000);
+      }, 10000);
     }
 
     return () => {

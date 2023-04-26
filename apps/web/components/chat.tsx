@@ -103,7 +103,10 @@ export const Chat = ({ loggedInUser }: { loggedInUser: { name: string } }) => {
   const _handleResetChat = () => {
     _resetState();
     if (socketConnection) {
-      socketConnection.emit("reset-chat");
+      socketConnection.close();
+      const newSocket = io(`${process.env.NEXT_PUBLIC_BASELINE_BACKEND_URL}`);
+      setSocketConnection(newSocket);
+      newSocket.emit("initialize-chat", currentProject);
     }
   };
 

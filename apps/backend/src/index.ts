@@ -150,15 +150,6 @@ io.on("connection", (socket) => {
     }
   });
 
-  socket.on("reset-chat", () => {
-    console.log(`Reset chat request received for client ${socket.id}`);
-    if (!baselineQAModel) {
-      console.error("Baseline model not initialized");
-    } else {
-      baselineQAModel.resetChatHistory();
-    }
-  });
-
   socket.on("disconnect", (reason) => {
     console.log(chalk.green(`${socket.id} disconnected because: ${reason}`));
   });
