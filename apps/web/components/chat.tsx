@@ -23,7 +23,8 @@ interface ChatEntry {
 
 const TIMEOUT_LIMIT = 30000;
 
-export const Chat = () => {
+//TODO: Update props to take in user type
+export const Chat = ({ loggedInUser }: { loggedInUser: { name: string } }) => {
   const { currentProject, projects } = useContext(BaselineContext);
   const router = useRouter();
   const [socketConnection, setSocketConnection] = useState<Socket | null>(null);
@@ -161,6 +162,7 @@ export const Chat = () => {
                   type={chatBlock.type}
                   content={chatBlock.data}
                   sources={chatBlock.sources}
+                  user={loggedInUser}
                 />
               );
             })

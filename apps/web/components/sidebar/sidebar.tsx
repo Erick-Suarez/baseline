@@ -1,5 +1,5 @@
 import { NavMenu } from "@/components/sidebar/navMenu";
-import { HUMAN_PROFILE_IMAGE } from "@/utils/images";
+import { createHumanProfileFromName, profileImageSizes } from "@/utils/images";
 import { ProjectSelectDropbox } from "@/components/projectSelectDropbox";
 import { RiLogoutBoxRLine } from "react-icons/ri";
 import { signOut, useSession } from "next-auth/react";
@@ -27,11 +27,9 @@ export const Sidebar = () => {
   return (
     <div className="flex h-full w-[300px] flex-col items-center justify-between border-r border-slate-300 px-3 py-10">
       <div className="flex w-full flex-col items-center justify-center">
-        <img
-          src={HUMAN_PROFILE_IMAGE}
-          alt="Profile photo"
-          className="mb-5 h-32 w-32 rounded-full object-cover"
-        />
+        {data
+          ? createHumanProfileFromName(data.user.name, profileImageSizes.LARGE)
+          : "Loading"}
         <h1 className="mb-1 text-xl font-bold">
           {data ? data.user.name : "Loading"}
         </h1>

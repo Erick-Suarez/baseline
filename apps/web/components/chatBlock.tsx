@@ -1,5 +1,12 @@
+/* eslint-disable @next/next/no-img-element */
+//TODO: Remove eslint disable when we switch to optimized nextjs images
+
 import ReactMarkdown from "react-markdown";
-import { HUMAN_PROFILE_IMAGE, AI_PROFILE_IMAGE } from "@/utils/images";
+import {
+  createHumanProfileFromName,
+  AI_PROFILE_IMAGE,
+  profileImageSizes,
+} from "@/utils/images";
 import classNames from "classnames";
 import { BeatLoader } from "react-spinners";
 import { filepath } from "@baselinedocs/shared";
@@ -22,40 +29,48 @@ export const ChatBlock = ({
   type,
   hideSeparator,
   sources,
+  user,
 }: {
   content: string;
   type: ChatBlockType;
   hideSeparator?: boolean;
   sources?: filepath[];
+  user?: { name: string };
 }) => {
-  let profile_src = "";
+  let profile = null;
   switch (type) {
     case ChatBlockType.HUMAN:
-      profile_src = HUMAN_PROFILE_IMAGE;
+      profile = createHumanProfileFromName(user!.name, profileImageSizes.SMALL);
       break;
 
     case ChatBlockType.AI:
-      profile_src = AI_PROFILE_IMAGE;
+      profile = (
+        <img
+          src={AI_PROFILE_IMAGE}
+          alt="Profile picture"
+          className="h-12 w-12 rounded-full object-cover"
+        />
+      );
       break;
 
     case ChatBlockType.LOADING:
-      profile_src = AI_PROFILE_IMAGE;
+      profile = (
+        <img
+          src={AI_PROFILE_IMAGE}
+          alt="Profile picture"
+          className="h-12 w-12 rounded-full object-cover"
+        />
+      );
       break;
 
     default:
       throw console.error("Invalid chat entity type");
   }
 
-  //TODO: Remove eslint disable when we switch to optimized nextjs images
-  /* eslint-disable */
   return (
     <div className="flex w-full flex-col items-center leading-8">
       <div className="flex w-full justify-center gap-5 px-16 py-5">
-        <img
-          src={profile_src}
-          alt="Profile picture"
-          className="h-12 w-12 rounded-full object-cover"
-        />
+        {profile}
         <div className="flex w-full flex-grow flex-col justify-center">
           {type === ChatBlockType.LOADING && (
             <BeatLoader size={12} color={"#818cf8"} />
