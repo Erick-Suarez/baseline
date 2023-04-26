@@ -3,6 +3,7 @@ import CredentialsProvider from "next-auth/providers/credentials";
 import { createClient } from "@supabase/supabase-js";
 import * as jwt from "jsonwebtoken";
 import { setCookie } from "nookies";
+import * as bcrypt from "bcrypt";
 
 const supabase = createClient(
   process.env.SUPABASE_URL,
@@ -56,17 +57,31 @@ export const nextAuthOptions = (req, res) => {
             .select(
               "*, organization_members(organization_id), organizations(organization_name)"
             )
-            .eq("email", credentials.username);
+            .eq("email", credentials.username)
+            .maybeSingle();
 
-          if (error || data.length === 0) {
+          if (error || !data) {
             console.error(error);
+            return null;
+          }
+
+          // Check Password
+          const passwordMatch = await bcrypt.compare(
+            credentials.password,
+            data.password
+          );
+
+          if (!passwordMatch) {
+            console.log(
+              `Login attempt for ${credentials.username} failed because of wrong password`
+            );
             return null;
           }
 
           // Generate JWT for backend
           const user = {
-            user_id: data[0].user_id,
-            organization_id: data[0].organization_members[0].organization_id,
+            user_id: data.user_id,
+            organization_id: data.organization_members[0].organization_id,
           };
 
           const accessToken = jwt.sign(user, process.env.JWT_SECRET, {
@@ -78,7 +93,7 @@ export const nextAuthOptions = (req, res) => {
             path: "/",
           });
 
-          return data[0];
+          return data;
         },
       }),
     ],

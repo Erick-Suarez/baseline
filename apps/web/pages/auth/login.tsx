@@ -27,7 +27,17 @@ export default function Loginpage({
           <h1 className="inline-block border-b-4 border-indigo-600 pb-2 text-6xl font-bold">
             Baseline
           </h1>
-          <div className="flex w-full flex-col gap-4 rounded-xl bg-white px-8 py-10 shadow-xl">
+          <form
+            className="flex w-full flex-col gap-4 rounded-xl bg-white px-8 py-10 shadow-xl"
+            onSubmit={(e) => {
+              e.preventDefault();
+              signIn("credentials", {
+                username: username.toLocaleLowerCase(),
+                password,
+                callbackUrl: "/manageData",
+              });
+            }}
+          >
             <h1 className="text-xl font-semibold">Sign in to your account</h1>
             {router.query.error === "CredentialsSignin" && (
               <h2 className="mt-[-10px] text-sm text-red-400">
@@ -54,32 +64,41 @@ export default function Loginpage({
               }}
             />
 
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <input
-                  id="remember-me"
-                  type="checkbox"
-                  className=" h-4 w-4 rounded border-gray-300 bg-gray-100 text-indigo-600 focus:ring-2 focus:ring-indigo-500 dark:border-gray-600 dark:bg-gray-700 dark:ring-offset-gray-800 dark:focus:ring-indigo-600"
-                />
-                <label htmlFor="remember-me">Keep me signed in</label>
+            {false && (
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <input
+                    id="remember-me"
+                    type="checkbox"
+                    className=" h-4 w-4 rounded border-gray-300 bg-gray-100 text-indigo-600 focus:ring-2 focus:ring-indigo-500 dark:border-gray-600 dark:bg-gray-700 dark:ring-offset-gray-800 dark:focus:ring-indigo-600"
+                  />
+                  <label htmlFor="remember-me">Keep me signed in</label>
+                </div>
               </div>
+            )}
+
+            <div className="w-full text-left">
+              <button className="hover:text-indigo-600">
+                Forgot password?
+              </button>
             </div>
 
             <button
+              type="submit"
               className="w-full rounded-md bg-indigo-600 py-4 text-lg font-bold text-white hover:bg-indigo-800"
-              onClick={() => {
-                signIn("credentials", {
-                  username,
-                  password,
-                  callbackUrl: "/manageData",
-                });
-              }}
             >
               Sign In
             </button>
 
-            <button className="hover:text-indigo-600">Forgot password?</button>
-          </div>
+            <div className="w-full text-center">
+              <a
+                className="text-indigo-600"
+                href="https://www.surveymonkey.com/r/7QSJLHG"
+              >
+                Don&apos;t have an account? Request access here
+              </a>
+            </div>
+          </form>
         </div>
       </div>
     </>
