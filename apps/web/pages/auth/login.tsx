@@ -78,7 +78,15 @@ export default function Loginpage({
             )}
 
             <div className="w-full text-left">
-              <button className="hover:text-indigo-600">
+              <button
+                type="button"
+                onClick={() => {
+                  alert(
+                    "If you forgot your password, just shoot an email to santiagou.career@gmail.com and I will email you a temporary password asap"
+                  );
+                }}
+                className="hover:text-indigo-600"
+              >
                 Forgot password?
               </button>
             </div>
