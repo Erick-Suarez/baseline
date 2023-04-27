@@ -40,6 +40,17 @@ export interface geRepositoriesWithEmbeddingsForOrganizationIdRequest {
   organization_id: string;
 }
 
+export interface updateUserDisplayNameRequest {
+  user_id: string;
+  new_displayName: string;
+}
+
+export interface updateUserPasswordRequest {
+  user_id: string;
+  current_password: string;
+  new_password: string;
+}
+
 export type geRepositoriesWithEmbeddingsForOrganizationIdResponse =
   Array<RepositoryWithEmbedding>;
 

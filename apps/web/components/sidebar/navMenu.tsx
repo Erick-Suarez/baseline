@@ -21,11 +21,11 @@ export const NavMenu = () => {
         routeIcon={RiQuestionAnswerFill}
         route="/chat"
       />
-      <NavMenuItem
+      {/* <NavMenuItem
         routeLabel="Favorites"
         routeIcon={RiStarFill}
         route="/favorites"
-      />
+      /> */}
       <NavMenuItem
         routeLabel="Manage Data sources"
         routeIcon={RiDatabase2Fill}

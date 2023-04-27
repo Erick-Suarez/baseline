@@ -23,8 +23,9 @@ export const nextAuthOptions = (req, res) => {
     },
     // Configure one or more authentication providers
     callbacks: {
-      async jwt({ token, user }) {
+      async jwt({ token, user, trigger, session }) {
         if (user) {
+          token.user_id = user.user_id;
           token.profile_pic = user.profile_pic;
           token.email_verified = user.email_verified;
           token.organization = {
@@ -33,9 +34,16 @@ export const nextAuthOptions = (req, res) => {
           };
         }
 
+        if (trigger === "update" && session) {
+          // Note, that `session` can be any arbitrary object, remember to validate it!
+          token.name = session.name;
+        }
+
         return token;
       },
-      async session({ session, token }) {
+      async session({ session, token, user }) {
+        session.user.user_id = token.user_id;
+        session.user.name = token.name;
         session.user.image = token.profile_pic;
         session.user.email_verified = token.email_verified === true;
         session.user.organization = token.organization;

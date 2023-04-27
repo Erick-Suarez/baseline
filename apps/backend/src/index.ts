@@ -8,6 +8,8 @@ import chalk from "chalk";
 import dataSyncRoute from "./routes/dataSyncRoute.js";
 import embeddingIndexRoute from "./routes/EmbeddingIndexRoute.js";
 import repositoryRoute from "./routes/repositoryRoute.js";
+import userRoute from "./routes/userRoute.js";
+
 import {
   ServerAIQueryResponse,
   ServerAIQueryRequest,
@@ -47,6 +49,7 @@ app.use(
 app.use("/data-sync", dataSyncRoute);
 app.use("/baseline", embeddingIndexRoute);
 app.use("/projects", repositoryRoute);
+app.use("/user", userRoute);
 
 app.get("/health", (req: Request, res: Response) => {
   res.status(200).json({ status: "healthy" });

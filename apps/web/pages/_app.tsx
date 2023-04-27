@@ -29,7 +29,7 @@ export const defaultGPTProject: Project = {
 };
 
 // Set the path of the pages here that should be rendered with a sidebar
-const PAGE_PATHS_WITH_SIDEBAR = ["/chat", "/manageData"];
+const PAGE_PATHS_WITH_SIDEBAR = ["/chat", "/manageData", "/settings"];
 
 export default function App({
   Component,
