@@ -6,9 +6,10 @@ import {
 import { fork } from "child_process";
 import { supabase } from "../lib/supabase.js";
 import { downloadRepository } from "../lib/github.js";
-import { deleteIndex, startIngestion } from "../lib/pinecone.js";
+import { deleteIndex, startIngestion } from "../lib/indexes.js";
 import fs from "fs";
 import * as dotenv from "dotenv";
+import _ from "lodash";
 
 dotenv.config();
 
@@ -29,8 +30,9 @@ export async function createIndexFromRepository(
   res: Response
 ) {
   const request = req.body;
-
-  const indexName = `${request.repo_id}`.toLowerCase();
+  const indexName = _.snakeCase(
+    `${request.repo_name}-${request.repo_id}`.toLowerCase()
+  );
 
   const createIndexResponse = await _createIndex(indexName, request.repo_id);
 
@@ -102,7 +104,7 @@ export async function deleteIndexForRepository(
     return res.status(500).send();
   }
 
-  // Delete Pinecone index
+  // Delete index
   embeddingIndexInfo.data.forEach((index) => {
     deleteIndex(index.index_name);
   });
@@ -128,7 +130,7 @@ async function _createIndex(index_name: string, repo_id: string) {
     .from("embedding_indexes")
     .insert({
       index_name: index_name,
-      index_source: "pinecone",
+      index_source: "supabase",
       repo_id: repo_id,
     })
     .select()

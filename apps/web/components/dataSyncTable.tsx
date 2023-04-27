@@ -95,6 +95,7 @@ export const ProjectDataTable = ({
                                   const payload: createEmbeddingFromRepositoryRequest =
                                     {
                                       repo_id: project.id,
+                                      repo_name: project.name,
                                     };
 
                                   fetch(

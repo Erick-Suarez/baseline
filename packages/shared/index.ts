@@ -26,6 +26,7 @@ export interface deleteDataSyncRequest {
 
 export interface createEmbeddingFromRepositoryRequest {
   repo_id: string;
+  repo_name: string;
 }
 
 export interface getDataSyncsForOrganizationRequest {
@@ -89,3 +90,10 @@ export interface UserJWTPayload {
   user_id: string;
   organization_id: string;
 }
+
+interface Record {
+  pageContent: string;
+  metadata: any;
+}
+
+export interface RelatedEmbeddings extends Array<[Record, number]> {}

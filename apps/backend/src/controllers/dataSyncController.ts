@@ -7,7 +7,7 @@ import {
   getDataSyncsForOrganizationResponse,
 } from "@baselinedocs/shared";
 import { supabase } from "../lib/supabase.js";
-import { deleteIndex } from "../lib/pinecone.js";
+import { deleteIndex } from "../lib/indexes.js";
 import * as dotenv from "dotenv";
 
 dotenv.config();

@@ -1,16 +1,14 @@
 import { ChatOpenAI } from "langchain/chat_models/openai";
 import { LLMChain } from "langchain/chains";
-import { OpenAIEmbeddings } from "langchain/embeddings/openai";
-import { PineconeClient } from "@pinecone-database/pinecone";
-import { PineconeStore } from "langchain/vectorstores/pinecone";
 import { CallbackManager } from "langchain/callbacks";
 import chalk from "chalk";
 import { PromptTemplate } from "langchain/prompts";
 import { MarkdownContent } from "@baselinedocs/shared";
 import { ChainValues } from "langchain/schema";
-import { Document } from "langchain/document";
 import { encode } from "gpt-3-encoder";
 import * as dotenv from "dotenv";
+import { similaritySearchWithScore } from "../indexes.js";
+import { RelatedEmbeddings } from "@baselinedocs/shared";
 
 dotenv.config();
 
@@ -114,7 +112,7 @@ export class BaselineChatQAModel {
 
   private _truncateEmbeddings(
     intialTokenTotal: number,
-    relatedEmbeddings: [Document<Record<string, any>>, number][]
+    relatedEmbeddings: RelatedEmbeddings
   ) {
     const truncatedEmbeddingsList = [];
     let total = intialTokenTotal;
@@ -160,22 +158,9 @@ export class BaselineChatQAModel {
   private async _getRelatedEmbeddingsForQuery(
     query: string,
     embeddingsToReturn: number
-  ): Promise<[Document, number][]> {
-    const client = new PineconeClient();
-
-    await client.init({
-      apiKey: process.env.PINECONE_API_KEY!,
-      environment: process.env.PINECONE_ENVIRONMENT!,
-    });
-
-    const pineconeIndex = client.Index(this.indexName);
-
-    const vectorStore = await PineconeStore.fromExistingIndex(
-      new OpenAIEmbeddings(),
-      { pineconeIndex }
-    );
-
-    return await vectorStore.similaritySearchWithScore(
+  ): Promise<RelatedEmbeddings> {
+    return await similaritySearchWithScore(
+      this.indexName,
       query,
       embeddingsToReturn
     );
