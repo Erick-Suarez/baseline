@@ -14,6 +14,8 @@ export const SyncWithGithubButton = ({
   organization_id: string;
   onSync: (arg: DataSyncs) => void;
 }) => {
+  const { forceRefresh } = useContext(BaselineContext);
+
   const { setDataSyncs } = useContext(BaselineContext);
   const clientId = process.env.NEXT_PUBLIC_GITHUB_CLIENT_ID;
   // Create state to persist between calls to the backend
@@ -42,7 +44,7 @@ export const SyncWithGithubButton = ({
         }),
       }).then(() => {
         // Reload on success
-        onSync({ github: false });
+        forceRefresh();
       });
     }
   }

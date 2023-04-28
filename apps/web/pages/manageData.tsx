@@ -86,13 +86,10 @@ export default function ManageDataPage({}: {}) {
 
     let interval: NodeJS.Timer;
     if (session.data && session.status === "authenticated") {
-      if (!initialLoadComplete) {
+      fetchProjects(session.data.user.organization.organization_id);
+      interval = setInterval(() => {
         fetchProjects(session.data.user.organization.organization_id);
-      } else {
-        interval = setInterval(() => {
-          fetchProjects(session.data.user.organization.organization_id);
-        }, 10000);
-      }
+      }, 10000);
     }
 
     return () => {
