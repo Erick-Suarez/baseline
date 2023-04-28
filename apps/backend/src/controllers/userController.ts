@@ -10,12 +10,16 @@ export async function updateUserDisplayName(
   req: Request<{}, {}, updateUserDisplayNameRequest>,
   res: Response
 ) {
-  const request = req.body;
-  console.log(request);
+  const { user_id, new_displayName } = req.body;
+  if (user_id === undefined || new_displayName === undefined) {
+    console.log(`Request missing required keys`);
+    return res.sendStatus(400);
+  }
+
   const { error } = await supabase
     .from("users")
-    .update({ name: request.new_displayName })
-    .eq("user_id", request.user_id);
+    .update({ name: new_displayName })
+    .eq("user_id", user_id);
 
   if (error) {
     console.error(error);
@@ -29,12 +33,20 @@ export async function updateUserPassword(
   req: Request<{}, {}, updateUserPasswordRequest>,
   res: Response
 ) {
-  const request = req.body;
+  const { user_id, current_password, new_password } = req.body;
 
+  if (
+    user_id === undefined ||
+    current_password === undefined ||
+    new_password === undefined
+  ) {
+    console.log(`Request missing required keys`);
+    return res.sendStatus(400);
+  }
   const { data, error } = await supabase
     .from("users")
     .select("password")
-    .eq("user_id", request.user_id)
+    .eq("user_id", user_id)
     .maybeSingle();
 
   if (error || !data) {
@@ -42,28 +54,25 @@ export async function updateUserPassword(
     return res.sendStatus(500);
   }
 
-  const passwordMatch = await bcrypt.compare(
-    request.current_password,
-    data.password
-  );
+  const passwordMatch = await bcrypt.compare(current_password, data.password);
 
   if (passwordMatch) {
-    const hashedPassword = await bcrypt.hash(request.new_password, 10);
+    const hashedPassword = await bcrypt.hash(new_password, 10);
     const { error } = await supabase
       .from("users")
       .update({ password: hashedPassword })
-      .eq("user_id", request.user_id);
+      .eq("user_id", user_id);
 
     if (error) {
       console.error(error);
       return res.sendStatus(500);
     }
 
-    console.log(`Password successfully changed for: ${request.user_id}`);
+    console.log(`Password successfully changed for: ${user_id}`);
     res.sendStatus(200);
   } else {
     console.log(
-      `${request.user_id} tried to update password with an invalid current password`
+      `${user_id} tried to update password with an invalid current password`
     );
     res.sendStatus(403);
   }

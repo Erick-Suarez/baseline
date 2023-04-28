@@ -9,17 +9,21 @@ export async function geRepositoriesWithEmbeddingsForOrganizationId(
   req: Request<geRepositoriesWithEmbeddingsForOrganizationIdRequest, {}, {}>,
   res: Response
 ) {
-  const request = req.params;
+  const { organization_id } = req.params;
+  if (organization_id === undefined) {
+    console.log(`Request missing required keys`);
+    return res.sendStatus(400);
+  }
   const { data, error } = await supabase
     .from("repos")
     .select(
       "*, data_syncs!inner(source), embedding_indexes(index_name, updated_at, last_repo_commit->commit_sha, ready)"
     )
-    .eq("data_syncs.organization_id", request.organization_id);
+    .eq("data_syncs.organization_id", organization_id);
 
   if (error || !data) {
     console.error(error);
-    return res.status(500).send();
+    return res.sendStatus(500);
   }
 
   res

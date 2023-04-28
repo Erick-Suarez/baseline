@@ -69,21 +69,21 @@ app.get("/auth/github/callback", async (req, res) => {
     return res.status(400).json({ message: "Missing query params" });
   }
 
-  const stateObj = JSON.parse(decodeURIComponent(req.query.state as string));
-  const organization_id = stateObj.organization_id;
+  try {
+    const stateObj = JSON.parse(decodeURIComponent(req.query.state as string));
+    const organization_id = stateObj.organization_id;
 
-  const { error } = await createGithubDataSyncForOrganization(
-    Number(organization_id),
-    req.query.code as string
-  );
+    await createGithubDataSyncForOrganization(
+      Number(organization_id),
+      req.query.code as string
+    );
 
-  if (error) {
+    // redirect the user back to the manageData page
+    res.redirect(`${process.env.BASELINE_FRONTEND_URL}/manageData`);
+  } catch (error) {
     console.error(error);
-    return res.status(500).send();
+    res.sendStatus(500);
   }
-
-  // redirect the user back to the manageData page
-  res.redirect(`${process.env.BASELINE_FRONTEND_URL}/manageData`);
 });
 
 // error handler
@@ -92,8 +92,9 @@ app.use(function (err: any, req: Request, res: Response, next: NextFunction) {
   res.locals.message = err.message;
   res.locals.error = req.app.get("env") === "development" ? err : {};
 
-  // render the error page
-  res.status(err.status || 500).send({ error: err });
+  console.error(err);
+
+  res.status(err.status || 500).json({ error: err });
 });
 
 const server = http.createServer(app);

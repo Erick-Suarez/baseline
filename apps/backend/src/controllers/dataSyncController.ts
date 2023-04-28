@@ -34,7 +34,7 @@ export async function createGithubDataSyncForOrganization(
     .select();
 
   if (error) {
-    return { error };
+    throw error;
   }
 
   const data_sync_id = data![0].data_sync_id;
@@ -49,23 +49,26 @@ export async function createGithubDataSyncForOrganization(
     });
 
     if (error) {
-      return { error };
+      throw error;
     }
   }
-
-  return { error: null };
 }
 
 export async function getDataSyncsForOrganization(
   req: Request<getDataSyncsForOrganizationRequest, {}, {}>,
   res: Response
 ) {
-  const request = req.params;
+  const { organization_id } = req.params;
+
+  if (organization_id === undefined) {
+    console.log(`Request missing required keys`);
+    return res.sendStatus(400);
+  }
 
   const { data, error } = await supabase
     .from("data_syncs")
     .select("source")
-    .eq("organization_id", request.organization_id);
+    .eq("organization_id", organization_id);
 
   if (error || !data) {
     console.error(error);
@@ -96,15 +99,20 @@ export async function deleteDataSync(
 ) {
   // Delete Datasync for organization
   // First find all indexes for organization and delete them then delete the data syncs
-  console.log("requested delete");
-  const deleteRequest = req.body;
+
+  const { organization_id, source } = req.body;
+
+  if (organization_id === undefined || source === undefined) {
+    console.log(`Request missing required keys`);
+    return res.sendStatus(400);
+  }
 
   const reposFromOrganizationRequest = await supabase
     .from("repos")
     .select(
       "repo_id, embedding_indexes(index_name), data_syncs!inner(data_sync_id)"
     )
-    .eq("data_syncs.organization_id", deleteRequest.organization_id);
+    .eq("data_syncs.organization_id", organization_id);
 
   if (
     reposFromOrganizationRequest.error ||
@@ -127,8 +135,8 @@ export async function deleteDataSync(
   const { error } = await supabase
     .from("data_syncs")
     .delete()
-    .eq("source", deleteRequest.source)
-    .eq("organization_id", deleteRequest.organization_id);
+    .eq("source", source)
+    .eq("organization_id", organization_id);
 
   if (error) {
     console.error(error);

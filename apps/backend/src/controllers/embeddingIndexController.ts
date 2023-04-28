@@ -29,16 +29,20 @@ export async function createIndexFromRepository(
   req: Request<{}, {}, createEmbeddingFromRepositoryRequest>,
   res: Response
 ) {
-  const request = req.body;
-  const indexName = _.snakeCase(
-    `${request.repo_name}-${request.repo_id}`.toLowerCase()
-  );
+  const { repo_id, repo_name } = req.body;
 
-  const createIndexResponse = await _createIndex(indexName, request.repo_id);
+  if (repo_id === undefined || repo_name === undefined) {
+    console.log(`Request missing required keys`);
+    return res.sendStatus(400);
+  }
+
+  const indexName = _.snakeCase(`${repo_name}-${repo_id}`.toLowerCase());
+
+  const createIndexResponse = await _createIndex(indexName, repo_id);
 
   if (createIndexResponse.error || !createIndexResponse.data) {
     console.error(createIndexResponse.error);
-    return res.status(500).send();
+    return res.sendStatus(500);
   }
 
   res.status(200).json({
@@ -49,11 +53,12 @@ export async function createIndexFromRepository(
   const { data, error } = await supabase
     .from("data_syncs")
     .select("access_token_data, repos!inner(repo_name, repo_owner)")
-    .eq("repos.repo_id", request.repo_id)
+    .eq("repos.repo_id", repo_id)
     .maybeSingle();
 
   if (error || !data) {
     console.error(error);
+    throw error;
   }
 
   const validatedData = data as DataSyncAccessTokenFromRepositoryModel;
@@ -93,11 +98,17 @@ export async function deleteIndexForRepository(
   req: Request<{}, {}, deleteEmbeddingFromRepositoryRequest>,
   res: Response
 ) {
-  const request = req.body;
+  const { repo_id } = req.body;
+
+  if (repo_id === undefined) {
+    console.log(`Request missing required keys`);
+    return res.sendStatus(400);
+  }
+
   const embeddingIndexInfo = await supabase
     .from("embedding_indexes")
     .select("index_name")
-    .eq("repo_id", request.repo_id);
+    .eq("repo_id", repo_id);
 
   if (embeddingIndexInfo.error || !embeddingIndexInfo.data) {
     console.error(embeddingIndexInfo.error);
@@ -113,7 +124,7 @@ export async function deleteIndexForRepository(
   const embeddingIndexDelete = await supabase
     .from("embedding_indexes")
     .delete()
-    .eq("repo_id", request.repo_id);
+    .eq("repo_id", repo_id);
 
   if (embeddingIndexDelete.error) {
     console.error(embeddingIndexDelete.error);
@@ -121,7 +132,7 @@ export async function deleteIndexForRepository(
   }
 
   res.status(200).json({
-    message: `Indexes for repo: ${request.repo_id} deleted successfully`,
+    message: `Indexes for repo: ${repo_id} deleted successfully`,
   });
 }
 

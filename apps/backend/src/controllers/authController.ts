@@ -18,19 +18,19 @@ export async function authenticateToken(
   res: Response,
   next: NextFunction
 ) {
-  const authHeader = req.headers['authorization']
-  const token = authHeader && authHeader.split(' ')[1]
-  if (!token) return res.status(401).json({message: "No auth token"})
+  const authHeader = req.headers["authorization"];
+  const token = authHeader && authHeader.split(" ")[1];
+  if (!token) return res.status(401).json({ message: "No auth token" });
 
   jwt.verify(token, process.env.JWT_SECRET!, (err, data) => {
     if (err) {
-      console.log(err)
-      return res.status(403).json({message: "Forbidden"})
+      console.log(err);
+      return res.status(403).json({ message: "Forbidden" });
     }
 
-     const authenticatedRequest = req as AuthenticatedRequest;
+    const authenticatedRequest = req as AuthenticatedRequest;
     authenticatedRequest.user = data as User;
 
-    next()
-  })
+    next();
+  });
 }
