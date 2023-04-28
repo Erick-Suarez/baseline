@@ -109,8 +109,11 @@ export const Chat = ({ loggedInUser }: { loggedInUser: { name: string } }) => {
     if (socketConnection) {
       socketConnection.close();
       const newSocket = io(`${process.env.NEXT_PUBLIC_BASELINE_BACKEND_URL}`);
+      newSocket.emit("auth", {
+        token: parseCookies()["baseline.access-token"],
+        currentProject,
+      });
       setSocketConnection(newSocket);
-      newSocket.emit("initialize-chat", currentProject);
     }
   };
 
