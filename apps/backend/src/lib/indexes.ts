@@ -64,7 +64,11 @@ function parseImports(content: string) {
   });
 }
 
-function loadFiles(directory: string, docs: Array<FileVector>) {
+function loadFiles(
+  baseDirectory: string,
+  directory: string,
+  docs: Array<FileVector>
+) {
   const files = fs.readdirSync(directory, { withFileTypes: true });
   files.forEach((file) => {
     const filepath = path.join(directory, file.name);
@@ -72,7 +76,7 @@ function loadFiles(directory: string, docs: Array<FileVector>) {
       if (IGNORE_DIRECTORIES.includes(file.name)) {
         return;
       }
-      loadFiles(filepath, docs);
+      loadFiles(baseDirectory, filepath, docs);
     }
     if (VALID_EXT.includes(path.extname(file.name))) {
       const filecontents = fs.readFileSync(filepath, "utf-8");
@@ -82,7 +86,7 @@ function loadFiles(directory: string, docs: Array<FileVector>) {
         metadata: {
           filename: file.name,
           directory,
-          filepath,
+          filepath: path.relative(baseDirectory, filepath),
           importsList,
         },
       });
@@ -190,7 +194,7 @@ export async function deleteIndex(indexName: string) {
 
 export async function startIngestion(directory: string, index_name: string) {
   const docs: Array<FileVector> = [];
-  loadFiles(directory, docs);
+  loadFiles(directory, directory, docs);
 
   console.log("Starting Ingestion...");
 

@@ -70,7 +70,7 @@ export class BaselineChatQAModel {
     /* Get n related embeddings for the question */
     const relatedEmbeddings = await this._getRelatedEmbeddingsForQuery(
       summarizedQuery.text,
-      3
+      10
     );
 
     const chatHistoryTokens = this.chatHistory.reduce(
@@ -117,7 +117,7 @@ export class BaselineChatQAModel {
     const truncatedEmbeddingsList = [];
     let total = intialTokenTotal;
     console.log(`intial token total: ${total}`);
-    const max_tokens = 3800;
+    const max_tokens = 3000;
     for (const embedding of relatedEmbeddings) {
       const tokens = encode(embedding[0].pageContent);
       console.log(
