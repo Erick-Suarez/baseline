@@ -54,12 +54,7 @@ export class BaselineChatQAModel {
       10
     );
 
-    // const chatHistoryTokens = this.chatHistory.reduce(
-    //   (total, chat) => total + encode(chat).length,
-    //   0
-    // );
-
-    const chatHistoryTokens = 0;
+    const chatHistoryTokens = encode(this._getChatHistoryAsString()).length;
 
     const intialTokenTotal = encode(query).length + chatHistoryTokens;
 
@@ -77,7 +72,7 @@ export class BaselineChatQAModel {
     const newCall = [
       ...this.chatHistory,
       new HumanChatMessage(`
-    Use the code files below to help me answer my code related questions. If the code files are not helpful or relevant, you should try answering using your pre-existing knowledge. You should not make up any information. If you are not confident in your answer say "I could not find an answer."
+    Use the code files below to help me answer my code related questions. If the code files are not helpful or relevant, you should try answering using your pre-existing knowledge. You should not make up any information. If you are not confident in your answer say "I could not find an answer." Give any code blocks as markdown.
     
     Code files:
     ${context}
@@ -85,6 +80,7 @@ export class BaselineChatQAModel {
     Question: ${query}
     `),
     ];
+
     const response = await this.chatModel.call(newCall);
 
     // Update chat history with response
@@ -127,17 +123,11 @@ export class BaselineChatQAModel {
   }
 
   private async _summarizeChatHistoryAndQuery(query: string): Promise<string> {
-    const chatHistoryString = this.chatHistory
-      .map((message) => {
-        return `${message.name} ${message.text}`;
-      })
-      .join("\n");
-
     const res = await this.summationModel
       .query(`Given a chat_history between an AI and a human, along with an original_query, please extract and analyze the relevant information from the chat_history. Create a new, standalone query that captures the essence of the original_query without relying on the chat_history. Include any relevant code blocks that are needed to understand the new question. Disregard any non-relevant parts of the chat_history. If the original_query is a question, do not answer it, but instead, form a new, standalone question that maintains the same meaning as the original_query.
 
     chat_history:
-    ${chatHistoryString}
+    ${this._getChatHistoryAsString()}
     
     original_query:
     ${query}
@@ -179,5 +169,17 @@ export class BaselineChatQAModel {
         },
       }),
     });
+  }
+
+  private _getChatHistoryAsString() {
+    const chatHistoryString = this.chatHistory
+      .map((message) => {
+        return `${message._getType().toString().trim().toUpperCase()}: ${
+          message.text
+        }`;
+      })
+      .join("\n");
+
+    return chatHistoryString;
   }
 }
