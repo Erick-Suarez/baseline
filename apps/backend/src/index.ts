@@ -16,7 +16,6 @@ import {
   Project,
 } from "@baselinedocs/shared";
 import { createGithubDataSyncForOrganization } from "./controllers/dataSyncController.js";
-import { DefaultChatQAModel } from "./lib/models/defaultQA.js";
 import {
   AuthenticatedRequest,
   authenticateToken,
@@ -24,6 +23,7 @@ import {
 import * as jwt from "jsonwebtoken";
 
 import * as dotenv from "dotenv";
+import { BasicChatCompletionModel } from "./lib/models/basicChat.js";
 
 dotenv.config();
 
@@ -115,7 +115,7 @@ io.on("connection", (socket) => {
     socket.emit("query-response-stream-token", token);
   };
 
-  let baselineQAModel: BaselineChatQAModel | DefaultChatQAModel;
+  let baselineQAModel: BaselineChatQAModel | BasicChatCompletionModel;
   let authenticated = false;
 
   socket.on(
@@ -140,7 +140,9 @@ io.on("connection", (socket) => {
             // Initialize new BaselineQAModel using project data
             if (currentProject.id == "-1") {
               // Initialize Default GPT
-              baselineQAModel = new DefaultChatQAModel({ newTokenHandler });
+              baselineQAModel = new BasicChatCompletionModel({
+                newTokenHandler,
+              });
             } else {
               baselineQAModel = new BaselineChatQAModel({
                 newTokenHandler,
@@ -169,6 +171,7 @@ io.on("connection", (socket) => {
     console.log(
       `Query request received for client ${socket.id}: ${data.query}`
     );
+
     if (!baselineQAModel) {
       console.error("Baseline model not initialized");
     } else {
