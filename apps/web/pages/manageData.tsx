@@ -1,6 +1,12 @@
 import { ProjectDataTable } from "@/components/dataSyncTable";
 import { SyncWithGithubButton } from "@/components/syncWithGithub";
-import { useCallback, useContext, useEffect, useState } from "react";
+import {
+  useCallback,
+  useContext,
+  useEffect,
+  useLayoutEffect,
+  useState,
+} from "react";
 import { BaselineContext } from "@/context/baselineContext";
 import { useSession } from "next-auth/react";
 import { DataSyncs } from "@/types/project";
@@ -10,6 +16,7 @@ import {
   geRepositoriesWithEmbeddingsForOrganizationIdResponse,
 } from "@baselinedocs/shared";
 import { defaultGPTProject } from "./_app";
+import { useRouter } from "next/router";
 
 export default function ManageDataPage({}: {}) {
   const session = useSession();
@@ -21,6 +28,7 @@ export default function ManageDataPage({}: {}) {
     setCurrentProject,
     refreshDep,
   } = useContext(BaselineContext);
+  const router = useRouter();
   const [initialLoadComplete, setInitialLoadComplete] =
     useState<boolean>(false);
   const [loading, setLoading] = useState(false);
@@ -80,29 +88,35 @@ export default function ManageDataPage({}: {}) {
         })
         .finally(() => {
           setLoading(false);
-          setInitialLoadComplete(true);
         });
     };
 
     let interval: NodeJS.Timer;
     if (session.data && session.status === "authenticated") {
-      fetchProjects(session.data.user.organization.organization_id);
-      interval = setInterval(() => {
+      if (!session.data.user.organization.is_admin) {
+        // Redirect if not admin
+        router.push("/chat");
+      } else {
+        setInitialLoadComplete(true);
         fetchProjects(session.data.user.organization.organization_id);
-      }, 10000);
+        interval = setInterval(() => {
+          fetchProjects(session.data.user.organization.organization_id);
+        }, 10000);
+      }
     }
 
     return () => {
       clearInterval(interval);
     };
   }, [
-    session,
-    dataSyncs,
-    setProjects,
+    dataSyncs.github,
+    router,
+    session.data,
+    session.status,
     setCurrentProject,
     setDataSyncs,
+    setProjects,
     refreshDep,
-    initialLoadComplete,
   ]);
 
   if (!initialLoadComplete) {

@@ -11,6 +11,14 @@ export const BaselineContext = createContext<{
   setDataSyncs: React.Dispatch<React.SetStateAction<DataSyncs>>;
   refreshDep: boolean; // Dependency other pages will need to subscribe to if forceRefresh() should also refresh that page
   forceRefresh: () => void;
+  errors: Array<{ message: string }>;
+  setErrors: React.Dispatch<
+    React.SetStateAction<
+      Array<{
+        message: string;
+      }>
+    >
+  >;
 }>({
   currentProject: null,
   setCurrentProject: () => {},
@@ -20,4 +28,6 @@ export const BaselineContext = createContext<{
   setDataSyncs: () => {},
   refreshDep: false,
   forceRefresh: () => {},
+  errors: [],
+  setErrors: () => {},
 });

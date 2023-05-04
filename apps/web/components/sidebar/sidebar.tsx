@@ -3,12 +3,14 @@ import { createHumanProfileFromName, profileImageSizes } from "@/utils/images";
 import { ProjectSelectDropbox } from "@/components/projectSelectDropbox";
 import { RiLogoutBoxRLine } from "react-icons/ri";
 import { signOut, useSession } from "next-auth/react";
+import { destroyCookie } from "nookies";
 
 const _bottomSection = (
   <div className="flex flex-col items-center gap-5">
     <button
       className="flex items-center gap-1 text-slate-600 hover:text-indigo-600"
       onClick={() => {
+        destroyCookie(null, "baseline.access-token");
         signOut({ callbackUrl: "/auth/login" });
       }}
     >
@@ -40,7 +42,7 @@ export const Sidebar = () => {
       <div className="mt-8 h-full w-full flex-grow">
         <ProjectSelectDropbox />
         <div className="mt-10 w-full">
-          <NavMenu />
+          {data && <NavMenu loggedInUser={data.user} />}
         </div>
       </div>
       {_bottomSection}

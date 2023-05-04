@@ -15,6 +15,7 @@ declare module "next-auth" {
       name: string;
       organization: {
         organization_id: string;
+        is_admin: boolean;
         organization_name: string;
       };
     } & DefaultSession["user"];

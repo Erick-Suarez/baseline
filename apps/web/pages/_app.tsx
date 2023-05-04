@@ -41,7 +41,7 @@ export default function App({
   const [dataSyncs, setDataSyncs] = useState<DataSyncs>({
     github: false,
   });
-
+  const [errors, setErrors] = useState<Array<{ message: string }>>([]);
   const [refresh, setRefresh] = useState(false);
 
   let componentToRender;
@@ -68,6 +68,8 @@ export default function App({
           setDataSyncs,
           refreshDep: refresh,
           forceRefresh: () => setRefresh((prev) => !prev),
+          errors,
+          setErrors,
         }}
       >
         {componentToRender}

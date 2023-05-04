@@ -15,6 +15,7 @@ import { BaselineContext } from "@/context/baselineContext";
 import assert from "assert";
 import { useRouter } from "next/router";
 import { parseCookies } from "nookies";
+import { defaultGPTProject } from "@/pages/_app";
 
 interface ChatEntry {
   type: ChatBlockType;
@@ -26,7 +27,8 @@ const TIMEOUT_LIMIT = 30000;
 
 //TODO: Update props to take in user type
 export const Chat = ({ loggedInUser }: { loggedInUser: { name: string } }) => {
-  const { currentProject, projects } = useContext(BaselineContext);
+  const { currentProject, projects, setCurrentProject } =
+    useContext(BaselineContext);
   const router = useRouter();
   const [socketConnection, setSocketConnection] = useState<Socket | null>(null);
   const [chatBlockList, setChatBlockList] = useState<ChatEntry[]>([
@@ -66,8 +68,9 @@ export const Chat = ({ loggedInUser }: { loggedInUser: { name: string } }) => {
     setWaitingForResponse(false);
 
     if (!currentProject) {
-      router.push("/manageData");
+      setCurrentProject(defaultGPTProject);
     }
+
     const socket = io(`${process.env.NEXT_PUBLIC_BASELINE_BACKEND_URL}`);
     setSocketConnection(socket);
     socket.emit("auth", {
@@ -78,7 +81,7 @@ export const Chat = ({ loggedInUser }: { loggedInUser: { name: string } }) => {
     return () => {
       socket.close();
     };
-  }, [currentProject, router]);
+  }, [currentProject, router, setCurrentProject]);
 
   useEffect(() => {
     socketConnection?.on("query-response-stream-token", (token) => {

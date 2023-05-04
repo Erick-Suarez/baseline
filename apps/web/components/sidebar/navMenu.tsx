@@ -11,7 +11,13 @@ import { useRouter } from "next/router";
 import classNames from "classnames";
 import { BaselineContext } from "@/context/baselineContext";
 
-export const NavMenu = () => {
+export const NavMenu = ({
+  loggedInUser,
+}: {
+  loggedInUser: {
+    organization: { is_admin: boolean };
+  };
+}) => {
   const { currentProject } = useContext(BaselineContext);
   return (
     <div className="flex w-full flex-grow flex-col">
@@ -26,11 +32,13 @@ export const NavMenu = () => {
         routeIcon={RiStarFill}
         route="/favorites"
       /> */}
-      <NavMenuItem
-        routeLabel="Manage Data sources"
-        routeIcon={RiDatabase2Fill}
-        route="/manageData"
-      />
+      {loggedInUser.organization.is_admin && (
+        <NavMenuItem
+          routeLabel="Manage Data sources"
+          routeIcon={RiDatabase2Fill}
+          route="/manageData"
+        />
+      )}
       <NavMenuItem
         routeLabel="Settings"
         routeIcon={RiSettings4Fill}

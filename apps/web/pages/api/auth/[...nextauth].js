@@ -30,6 +30,7 @@ export const nextAuthOptions = (req, res) => {
           token.email_verified = user.email_verified;
           token.organization = {
             organization_id: user.organization_members[0].organization_id,
+            is_admin: user.organization_members[0].is_admin,
             organization_name: user.organizations[0].organization_name,
           };
         }
@@ -63,7 +64,7 @@ export const nextAuthOptions = (req, res) => {
           const { data, error } = await supabase
             .from("users")
             .select(
-              "*, organization_members(organization_id), organizations(organization_name)"
+              "*, organization_members(organization_id, is_admin), organizations(organization_name)"
             )
             .eq("email", credentials.username)
             .maybeSingle();
