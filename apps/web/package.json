@@ -13,6 +13,7 @@
     "@headlessui/react": "^1.7.13",
     "@supabase/supabase-js": "^2.20.0",
     "@types/jsonwebtoken": "^9.0.1",
+    "@vercel/analytics": "^1.0.1",
     "autoprefixer": "10.4.14",
     "bcrypt": "^5.1.0",
     "classnames": "^2.3.2",

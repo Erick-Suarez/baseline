@@ -19,6 +19,7 @@ import { parseCookies } from "nookies";
 import { PageWithSidebar } from "@/components/layouts/pageWithSidebar";
 import { GetServerSideProps, GetServerSidePropsContext } from "next/types";
 import { Session } from "next-auth";
+import { Analytics } from "@vercel/analytics/react";
 
 export const defaultGPTProject: Project = {
   id: "-1",
@@ -73,6 +74,7 @@ export default function App({
         }}
       >
         {componentToRender}
+        <Analytics />
       </BaselineContext.Provider>
     </SessionProvider>
   );
