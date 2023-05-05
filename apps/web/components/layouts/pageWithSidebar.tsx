@@ -1,7 +1,7 @@
 import {
   Project,
   geRepositoriesWithEmbeddingsForOrganizationIdResponse,
-} from "@/../../packages/shared/dist";
+} from "@baselinedocs/shared";
 import { Sidebar } from "@/components/sidebar/sidebar";
 import { BaselineContext } from "@/context/baselineContext";
 import { defaultGPTProject } from "@/pages/_app";
