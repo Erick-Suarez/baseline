@@ -7,6 +7,15 @@ import { destroyCookie } from "nookies";
 
 const _bottomSection = (
   <div className="flex flex-col items-center gap-5">
+    <a
+      href="https://airtable.com/shrfHtItC1MjAJrZ9"
+      target="_blank"
+      rel="noopener noreferrer"
+    >
+      <button className="mb-10 rounded-md bg-black px-6 py-2 font-bold text-white hover:bg-slate-800">
+        Submit Feedback
+      </button>
+    </a>
     <button
       className="flex items-center gap-1 text-slate-600 hover:text-indigo-600"
       onClick={() => {
