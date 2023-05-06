@@ -16,6 +16,7 @@ import assert from "assert";
 import { useRouter } from "next/router";
 import { parseCookies } from "nookies";
 import { defaultGPTProject } from "@/pages/_app";
+import { event } from "nextjs-google-analytics";
 
 interface ChatEntry {
   type: ChatBlockType;
@@ -131,6 +132,10 @@ export const Chat = ({ loggedInUser }: { loggedInUser: { name: string } }) => {
         ]);
         setWaitingForResponse(true);
         socketConnection.emit("query-request", queryRequest);
+        event("submit_button", {
+          category: "query_request",
+          label: queryRequest.query,
+        });
       }
     }
 

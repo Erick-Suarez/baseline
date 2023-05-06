@@ -8,6 +8,7 @@ import { nextAuthOptions } from "@/pages/api/auth/[...nextauth]";
 import { useState } from "react";
 import Head from "next/head";
 import { useRouter } from "next/router";
+import { event } from "nextjs-google-analytics";
 
 export default function Loginpage({
   providers,
@@ -35,6 +36,10 @@ export default function Loginpage({
                 username: username.toLocaleLowerCase(),
                 password,
                 callbackUrl: "/manageData",
+              });
+              event("submit_form", {
+                category: "user_login",
+                label: username,
               });
             }}
           >
