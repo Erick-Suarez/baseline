@@ -32,7 +32,7 @@ export async function createIndexFromRepository(
   const { repo_id, repo_name } = req.body;
 
   if (repo_id === undefined || repo_name === undefined) {
-    console.log(`Request missing required keys`);
+    req.log.info(`Request missing required keys`);
     return res.sendStatus(400);
   }
 
@@ -66,7 +66,8 @@ export async function createIndexFromRepository(
   try {
     filepath = await downloadRepository(
       validatedData.access_token_data.access_token,
-      validatedData.repos[0]
+      validatedData.repos[0],
+      req.log
     );
   } catch (error) {
     console.error(error);
@@ -75,9 +76,9 @@ export async function createIndexFromRepository(
 
   // TODO: Create child
   // Launch child process
-  console.log("Launching Child process to ingest repository");
+  req.log.info("Launching Child process to ingest repository");
   try {
-    await startIngestion(filepath, indexName);
+    await startIngestion(filepath, indexName, req.log);
     // Ingestion is done update DB entry
     await supabase
       .from("embedding_indexes")
@@ -85,7 +86,7 @@ export async function createIndexFromRepository(
       .eq("embedding_index_id", createIndexResponse.data.embedding_index_id);
 
     fs.rmSync(filepath, { recursive: true });
-    console.log(`${filepath} deleted successfully`);
+    req.log.info(`${filepath} deleted successfully`);
   } catch (error) {
     // TODO: If any part fails we should reset the DB so the user can try again, or we should try to be ATOMIC and not save unless everything is successfull
     // TODO: This process might be flaky too so we should revert to beginning and retry, Also might want to find a way to deal with server restarts
@@ -101,7 +102,7 @@ export async function deleteIndexForRepository(
   const { repo_id } = req.body;
 
   if (repo_id === undefined) {
-    console.log(`Request missing required keys`);
+    req.log.info(`Request missing required keys`);
     return res.sendStatus(400);
   }
 
@@ -117,7 +118,7 @@ export async function deleteIndexForRepository(
 
   // Delete index
   embeddingIndexInfo.data.forEach((index) => {
-    deleteIndex(index.index_name);
+    deleteIndex(index.index_name, req.log);
   });
 
   // Delete database record

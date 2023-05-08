@@ -61,7 +61,7 @@ export async function getDataSyncsForOrganization(
   const { organization_id } = req.params;
 
   if (organization_id === undefined) {
-    console.log(`Request missing required keys`);
+    req.log.info(`Request missing required keys`);
     return res.sendStatus(400);
   }
 
@@ -103,7 +103,7 @@ export async function deleteDataSync(
   const { organization_id, source } = req.body;
 
   if (organization_id === undefined || source === undefined) {
-    console.log(`Request missing required keys`);
+    req.log.info(`Request missing required keys`);
     return res.sendStatus(400);
   }
 
@@ -128,7 +128,7 @@ export async function deleteDataSync(
 
   validatedData.forEach((repo) => {
     repo.embedding_indexes.forEach((index) => {
-      deleteIndex(index.index_name);
+      deleteIndex(index.index_name, req.log);
     });
   });
 

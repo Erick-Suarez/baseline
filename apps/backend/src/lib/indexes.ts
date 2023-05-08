@@ -94,13 +94,17 @@ function loadFiles(
   });
 }
 
-async function uploadVectors(docs: Array<FileVector>, index_name: string) {
+async function uploadVectors(
+  docs: Array<FileVector>,
+  index_name: string,
+  logger: any
+) {
   const maxSize = 4000;
   for (const { filecontents, metadata } of docs) {
     for (let i = 0; i < filecontents.length; i += maxSize) {
       const maxRetries = 3;
       for (let retry = 0; retry < maxRetries; retry++) {
-        console.log(
+        logger.info(
           `Uploading: ${metadata.filepath}, chunk: [${i},${i + maxSize}]`
         );
         try {
@@ -109,17 +113,18 @@ async function uploadVectors(docs: Array<FileVector>, index_name: string) {
               filecontents: filecontents.substring(i, i + maxSize),
               metadata,
             },
-            index_name
+            index_name,
+            logger
           );
           break;
         } catch (err) {
           console.error(chalk.red(err));
-          console.log(
+          logger.info(
             chalk.red(
               `Error at ${metadata.filepath}, length of content: ${filecontents.length}`
             )
           );
-          console.log(chalk.blue(`retrying upload ${retry}/${maxRetries}`));
+          logger.info(chalk.blue(`retrying upload ${retry}/${maxRetries}`));
           await new Promise((resolve, err) => {
             setTimeout(() => {
               resolve("");
@@ -131,13 +136,17 @@ async function uploadVectors(docs: Array<FileVector>, index_name: string) {
   }
 }
 
-async function uploadEmedding(vector: FileVector, indexName: string) {
+async function uploadEmedding(
+  vector: FileVector,
+  indexName: string,
+  logger: any
+) {
   const { filecontents, metadata } = vector;
   const summary = await codeSummaryChain.call({
     code: filecontents,
   });
 
-  console.log(`file: ${metadata.filename} - ${summary.text}`);
+  logger.info(`file: ${metadata.filename} - ${summary.text}`);
   const content =
     `Filename: ${metadata.filename}\nFilepath: ${metadata.filepath}\nSummary:${summary.text}\n\n` +
     filecontents;
@@ -151,11 +160,11 @@ async function uploadEmedding(vector: FileVector, indexName: string) {
       ...metadata,
     },
   });
-  console.log(record);
+  logger.info(record);
 }
 
-async function createIndex(indexName: string) {
-  console.log(`creating index ${indexName} in schema indexes`);
+async function createIndex(indexName: string, logger: any) {
+  logger.info(`creating index ${indexName} in schema indexes`);
   const { data, error: indexError } = await supabaseIndexes.rpc(
     "create_index",
     {
@@ -167,14 +176,14 @@ async function createIndex(indexName: string) {
     return;
   }
   if (data) {
-    console.log(`index ${indexName} created in schema indexes successfully`);
+    logger.info(`index ${indexName} created in schema indexes successfully`);
     return;
   }
-  console.log(`index ${indexName} already exists`);
+  logger.info(`index ${indexName} already exists`);
 }
 
-export async function deleteIndex(indexName: string) {
-  console.log(`deleting index ${indexName} in schema indexes`);
+export async function deleteIndex(indexName: string, logger: any) {
+  logger.info(`deleting index ${indexName} in schema indexes`);
   const { data, error: deleteError } = await supabaseIndexes.rpc(
     "delete_index",
     {
@@ -186,22 +195,26 @@ export async function deleteIndex(indexName: string) {
     return;
   }
   if (data) {
-    console.log(`index ${indexName} deleted from schema indexes`);
+    logger.info(`index ${indexName} deleted from schema indexes`);
     return;
   }
-  console.log(`error deleting ${indexName}`);
+  logger.info(`error deleting ${indexName}`);
 }
 
-export async function startIngestion(directory: string, index_name: string) {
+export async function startIngestion(
+  directory: string,
+  index_name: string,
+  logger: any
+) {
   const docs: Array<FileVector> = [];
   loadFiles(directory, directory, docs);
 
-  console.log("Starting Ingestion...");
+  logger.info("Starting Ingestion...");
 
-  await createIndex(index_name);
-  await uploadVectors(docs, index_name);
+  await createIndex(index_name, logger);
+  await uploadVectors(docs, index_name, logger);
 
-  console.log("Ingestion done!");
+  logger.info("Ingestion done!");
 }
 
 function _cosineSimilarity(
@@ -217,7 +230,8 @@ function _cosineSimilarity(
 export async function similaritySearchWithScore(
   indexName: string,
   query: string,
-  embeddingsToReturn: number
+  embeddingsToReturn: number,
+  logger: any
 ): Promise<RelatedEmbeddings> {
   const queryEmbedding = await embeddings.embedQuery(query);
   const { data, error } = await supabaseIndexes.rpc("similarity_search", {
@@ -235,7 +249,7 @@ export async function similaritySearchWithScore(
       queryEmbedding,
       JSON.parse(vector.embedding)
     );
-    console.log(
+    logger.info(
       `file: ${vector.metadata.filename}, summary: ${vector.metadata.summary}, score: ${similarityScore}`
     );
     result.push([
