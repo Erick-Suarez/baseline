@@ -22,6 +22,7 @@ export enum ChatBlockType {
   AI = "ai",
   LOADING = "loading",
   TIMEOUT = "timeout",
+  ERROR = "error",
 }
 
 export const ChatBlock = ({
@@ -54,6 +55,15 @@ export const ChatBlock = ({
       break;
 
     case ChatBlockType.LOADING:
+      profile = (
+        <img
+          src={AI_PROFILE_IMAGE}
+          alt="Profile picture"
+          className="h-12 w-12 rounded-full object-cover"
+        />
+      );
+      break;
+    case ChatBlockType.ERROR:
       profile = (
         <img
           src={AI_PROFILE_IMAGE}
@@ -104,7 +114,11 @@ export const ChatBlock = ({
           {type === ChatBlockType.HUMAN && (
             <div className="whitespace-pre-wrap">{content}</div>
           )}
-
+          {type === ChatBlockType.ERROR && (
+            <div className="whitespace-pre-wrap font-bold text-red-500">
+              {content}
+            </div>
+          )}
           {sources && sources.length > 0 && <Sources sources={sources} />}
         </div>
       </div>

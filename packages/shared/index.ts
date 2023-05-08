@@ -91,9 +91,14 @@ export interface UserJWTPayload {
   organization_id: string;
 }
 
-interface Record {
+export interface Record {
   pageContent: string;
   metadata: any;
+}
+
+export interface ServerSocketError {
+  type: number;
+  message: string;
 }
 
 export interface RelatedEmbeddings extends Array<[Record, number]> {}

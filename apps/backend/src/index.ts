@@ -14,6 +14,7 @@ import {
   ServerAIQueryResponse,
   ServerAIQueryRequest,
   Project,
+  ServerSocketError,
 } from "@baselinedocs/shared";
 import { createGithubDataSyncForOrganization } from "./controllers/dataSyncController.js";
 import {
@@ -115,6 +116,12 @@ io.on("connection", (socket) => {
     socket.emit("query-response-stream-token", token);
   };
 
+  const handleError = (type: number, errorMessage: string) => {
+    console.error(handleError);
+    const error: ServerSocketError = { type, message: errorMessage };
+    socket.emit("error", error);
+  };
+
   let baselineQAModel: BaselineChatQAModel | BasicChatCompletionModel;
   let authenticated = false;
 
@@ -125,6 +132,7 @@ io.on("connection", (socket) => {
         jwt.verify(token, process.env.JWT_SECRET!, (err, data) => {
           if (err || !data) {
             console.log(err);
+            handleError(403, "JWT verification error");
           } else {
             data = data as jwt.JwtPayload;
 
@@ -163,18 +171,17 @@ io.on("connection", (socket) => {
 
   socket.on("query-request", async (data: ServerAIQueryRequest) => {
     if (!authenticated) {
-      console.log(
+      handleError(
+        403,
         `client ${socket.id} tried to make request: query-request, but is not authorized`
       );
-      return;
-    }
-    console.log(
-      `Query request received for client ${socket.id}: ${data.query}`
-    );
-
-    if (!baselineQAModel) {
-      console.error("Baseline model not initialized");
+    } else if (!baselineQAModel) {
+      handleError(500, "Baseline model not initialized");
     } else {
+      console.log(
+        `Query request received for client ${socket.id}: ${data.query}`
+      );
+
       try {
         const ModelResponse = await baselineQAModel.query(data.query);
 
@@ -188,6 +195,7 @@ io.on("connection", (socket) => {
         socket.emit("query-response-stream-finished", queryResponse);
       } catch (err) {
         console.error(err);
+        handleError(500, "Server erorr while processing query");
       }
     }
   });

@@ -9,6 +9,7 @@ import {
   ServerAIQueryRequest,
   filepath,
   MarkdownContent,
+  ServerSocketError,
 } from "@baselinedocs/shared";
 import { ChatBlock, ChatBlockType } from "@/components/chatBlock";
 import { BaselineContext } from "@/context/baselineContext";
@@ -41,6 +42,7 @@ export const Chat = ({ loggedInUser }: { loggedInUser: { name: string } }) => {
   const [inputValue, setInputValue] = useState<string>("");
   const [waitingForResponse, setWaitingForResponse] = useState<boolean>(false);
   const [streamBuffer, setStreamBuffer] = useState<string[]>([]);
+  const [errorState, setErrorState] = useState<ServerSocketError | null>(null);
   const chatBoxEnd = useRef(null);
 
   const _resetState = () => {
@@ -67,6 +69,7 @@ export const Chat = ({ loggedInUser }: { loggedInUser: { name: string } }) => {
     setInputValue("");
     setStreamBuffer([]);
     setWaitingForResponse(false);
+    setErrorState(null);
 
     if (!currentProject) {
       setCurrentProject(defaultGPTProject);
@@ -104,6 +107,10 @@ export const Chat = ({ loggedInUser }: { loggedInUser: { name: string } }) => {
         setWaitingForResponse(false);
       }
     );
+
+    socketConnection?.on("error", (error: ServerSocketError) => {
+      setErrorState(error);
+    });
 
     _scrollToBottom();
   }, [socketConnection]);
@@ -147,6 +154,33 @@ export const Chat = ({ loggedInUser }: { loggedInUser: { name: string } }) => {
     chatBoxEnd.current?.scrollIntoView({ behavior: "smooth" });
   }
 
+  const _chatEntries = (
+    <>
+      {waitingForResponse && (
+        <ChatBlock
+          type={
+            streamBuffer.length > 0 ? ChatBlockType.AI : ChatBlockType.LOADING
+          }
+          content={streamBuffer.join("")}
+        />
+      )}
+      {chatBlockList
+        .map((chatBlock, index) => {
+          return (
+            <ChatBlock
+              key={`chat_block_${index}`}
+              type={chatBlock.type}
+              content={chatBlock.data}
+              sources={chatBlock.sources}
+              user={loggedInUser}
+            />
+          );
+        })
+        .reverse()}
+      <div ref={chatBoxEnd} />
+    </>
+  );
+
   return (
     <div className="flex h-[95vh] max-h-[1080px] w-[80vw] max-w-[1440px] flex-col px-2">
       <div className="mb-2 flex w-full justify-end">
@@ -162,34 +196,22 @@ export const Chat = ({ loggedInUser }: { loggedInUser: { name: string } }) => {
       </div>
       <div className="mb-5 h-full w-full overflow-clip rounded-xl border border-slate-300 shadow-xl">
         <div className="flex h-full w-full flex-col-reverse overflow-y-auto pt-5">
-          {waitingForResponse && (
+          {errorState !== null ? (
             <ChatBlock
-              type={
-                streamBuffer.length > 0
-                  ? ChatBlockType.AI
-                  : ChatBlockType.LOADING
+              type={ChatBlockType.ERROR}
+              content={
+                errorState.type === 403
+                  ? "Session timeout please try logging in again"
+                  : "Server error, please submit feedback and try again later"
               }
-              content={streamBuffer.join("")}
             />
+          ) : (
+            _chatEntries
           )}
-          {chatBlockList
-            .map((chatBlock, index) => {
-              return (
-                <ChatBlock
-                  key={`chat_block_${index}`}
-                  type={chatBlock.type}
-                  content={chatBlock.data}
-                  sources={chatBlock.sources}
-                  user={loggedInUser}
-                />
-              );
-            })
-            .reverse()}
-          <div ref={chatBoxEnd} />
         </div>
       </div>
       <ChatInputBar
-        disabled={waitingForResponse}
+        disabled={waitingForResponse || errorState !== null}
         value={inputValue}
         handleChange={(value: string) => {
           setInputValue(value);
