@@ -1,5 +1,4 @@
 import { NextFunction, Request, Response } from "express";
-import { parseCookies } from "nookies";
 import * as jwt from "jsonwebtoken";
 import * as dotenv from "dotenv";
 
@@ -24,12 +23,13 @@ export async function authenticateToken(
 
   jwt.verify(token, process.env.JWT_SECRET!, (err, data) => {
     if (err) {
-      console.log(err);
+      req.log.info(err);
       return res.status(403).json({ message: "Forbidden" });
     }
 
     const authenticatedRequest = req as AuthenticatedRequest;
     authenticatedRequest.user = data as User;
+    req.log = req.log.child({ userId: authenticatedRequest.user });
 
     next();
   });

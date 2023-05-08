@@ -6,12 +6,8 @@ import {
   SystemChatMessage,
 } from "langchain/schema";
 
-import { LLMChain } from "langchain/chains";
 import { CallbackManager } from "langchain/callbacks";
-import chalk from "chalk";
-import { PromptTemplate } from "langchain/prompts";
 import { MarkdownContent } from "@baselinedocs/shared";
-import { ChainValues } from "langchain/schema";
 import { encode } from "gpt-3-encoder";
 import * as dotenv from "dotenv";
 import { similaritySearchWithScore } from "../indexes.js";
@@ -42,16 +38,17 @@ export class BaselineChatQAModel {
     ];
   }
 
-  async query(query: string) {
+  async query(query: string, logger: any) {
     /* Summarize chat history and query into new question */
     const summarizedQuery = await this._summarizeChatHistoryAndQuery(query);
 
-    console.log(chalk.green(`Summarized query: ${summarizedQuery}`));
+    logger.info(`Summarized query: ${summarizedQuery}`);
 
     /* Get n related embeddings for the question */
     const relatedEmbeddings = await this._getRelatedEmbeddingsForQuery(
       `${summarizedQuery}\n\n${query}`,
-      10
+      10,
+      logger
     );
 
     const chatHistoryTokens = encode(this._getChatHistoryAsString()).length;
@@ -60,7 +57,8 @@ export class BaselineChatQAModel {
 
     const truncatedEmbeddingsList = this._truncateEmbeddings(
       intialTokenTotal,
-      relatedEmbeddings
+      relatedEmbeddings,
+      logger
     );
 
     /* Create context string from embeddings */
@@ -73,10 +71,10 @@ export class BaselineChatQAModel {
       ...this.chatHistory,
       new HumanChatMessage(`
     Use the code files below to help me answer my code related questions. If the code files are not helpful or relevant, you should try answering using your pre-existing knowledge. You should not make up any information. If you are not confident in your answer say "I could not find an answer." Give any code blocks as markdown.
-    
+
     Code files:
     ${context}
-    
+
     Question: ${query}
     `),
     ];
@@ -96,26 +94,23 @@ export class BaselineChatQAModel {
 
   private _truncateEmbeddings(
     intialTokenTotal: number,
-    relatedEmbeddings: RelatedEmbeddings
+    relatedEmbeddings: RelatedEmbeddings,
+    logger: any
   ) {
     const truncatedEmbeddingsList = [];
     let total = intialTokenTotal;
-    console.log(`intial token total: ${total}`);
+    logger.info(`intial token total: ${total}`);
     const max_tokens = 3000;
     for (const embedding of relatedEmbeddings) {
       const tokens = encode(embedding[0].pageContent);
-      console.log(
-        chalk.yellow(
-          `tokens: ${tokens.length} filepath: ${embedding[0].metadata.filepath}`
-        )
+      logger.info(
+        `tokens: ${tokens.length} filepath: ${embedding[0].metadata.filepath}`
       );
       if (total + tokens.length < max_tokens && embedding[1] > 0.72) {
         truncatedEmbeddingsList.push(embedding[0]);
         total += tokens.length;
-        console.log(
-          chalk.green(
-            `added filepath: ${embedding[0].metadata.filepath}, token total: ${total}  simScore: ${embedding[1]}`
-          )
+        logger.info(
+          `added filepath: ${embedding[0].metadata.filepath}, token total: ${total}  simScore: ${embedding[1]}`
         );
       }
     }
@@ -128,10 +123,10 @@ export class BaselineChatQAModel {
 
     chat_history:
     ${this._getChatHistoryAsString()}
-    
+
     original_query:
     ${query}
-    
+
     new query:
      `);
 
@@ -143,12 +138,14 @@ export class BaselineChatQAModel {
 
   private async _getRelatedEmbeddingsForQuery(
     query: string,
-    embeddingsToReturn: number
+    embeddingsToReturn: number,
+    logger: any
   ): Promise<RelatedEmbeddings> {
     return await similaritySearchWithScore(
       this.indexName,
       query,
-      embeddingsToReturn
+      embeddingsToReturn,
+      logger
     );
   }
 

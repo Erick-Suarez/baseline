@@ -1,4 +1,4 @@
-import express, { Request, Response } from "express";
+import { Request, Response } from "express";
 import {
   geRepositoriesWithEmbeddingsForOrganizationIdRequest,
   geRepositoriesWithEmbeddingsForOrganizationIdResponse,
@@ -11,7 +11,7 @@ export async function geRepositoriesWithEmbeddingsForOrganizationId(
 ) {
   const { organization_id } = req.params;
   if (organization_id === undefined) {
-    console.log(`Request missing required keys`);
+    req.log.info(`Request missing required keys`);
     return res.sendStatus(400);
   }
   const { data, error } = await supabase

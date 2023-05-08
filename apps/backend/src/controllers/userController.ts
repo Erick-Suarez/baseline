@@ -12,7 +12,7 @@ export async function updateUserDisplayName(
 ) {
   const { user_id, new_displayName } = req.body;
   if (user_id === undefined || new_displayName === undefined) {
-    console.log(`Request missing required keys`);
+    req.log.info(`Request missing required keys`);
     return res.sendStatus(400);
   }
 
@@ -40,7 +40,7 @@ export async function updateUserPassword(
     current_password === undefined ||
     new_password === undefined
   ) {
-    console.log(`Request missing required keys`);
+    req.log.info(`Request missing required keys`);
     return res.sendStatus(400);
   }
   const { data, error } = await supabase
@@ -68,10 +68,10 @@ export async function updateUserPassword(
       return res.sendStatus(500);
     }
 
-    console.log(`Password successfully changed for: ${user_id}`);
+    req.log.info(`Password successfully changed for: ${user_id}`);
     res.sendStatus(200);
   } else {
-    console.log(
+    req.log.info(
       `${user_id} tried to update password with an invalid current password`
     );
     res.sendStatus(403);

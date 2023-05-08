@@ -41,7 +41,8 @@ export async function downloadRepository(
   repo: {
     repo_name: string;
     repo_owner: string;
-  }
+  },
+  logger: any
 ) {
   const octokit = new Octokit({
     auth: accessToken,
@@ -68,11 +69,11 @@ export async function downloadRepository(
   const extractFilePath = path.join("temp/repositories");
 
   fs.writeFileSync(tarFilepath, Buffer.from(tarball.data));
-  console.log(`TAR file downloaded and saved to ${tarFilepath}`);
+  logger.info(`TAR file downloaded and saved to ${tarFilepath}`);
   await tar.extract({ file: tarFilepath, cwd: extractFilePath });
-  console.log("TAR file extracted");
+  logger.info("TAR file extracted");
   fs.unlinkSync(tarFilepath);
-  console.log(`TAR file deleted`);
+  logger.info(`TAR file deleted`);
 
   const filename = extractFilenameFromContentDisposition(
     tarball.headers["content-disposition"] as string
