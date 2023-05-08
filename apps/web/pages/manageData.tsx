@@ -25,7 +25,6 @@ export default function ManageDataPage({}: {}) {
     setDataSyncs,
     projects: SyncedProjects,
     setProjects,
-    setCurrentProject,
     refreshDep,
   } = useContext(BaselineContext);
   const router = useRouter();
@@ -78,9 +77,6 @@ export default function ManageDataPage({}: {}) {
 
           setProjects([...projects, defaultGPTProject]);
           setDataSyncsFromProjects(projects);
-          if (projects.length === 0) {
-            setCurrentProject(null);
-          }
         })
         .catch((err) => {
           console.error(err);
@@ -113,7 +109,6 @@ export default function ManageDataPage({}: {}) {
     router,
     session.data,
     session.status,
-    setCurrentProject,
     setDataSyncs,
     setProjects,
     refreshDep,

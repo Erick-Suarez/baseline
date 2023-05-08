@@ -20,6 +20,7 @@ const _bottomSection = (
       className="flex items-center gap-1 text-slate-600 hover:text-indigo-600"
       onClick={() => {
         destroyCookie(null, "baseline.access-token");
+        localStorage.removeItem("baseline.context");
         signOut({ callbackUrl: "/auth/login" });
       }}
     >

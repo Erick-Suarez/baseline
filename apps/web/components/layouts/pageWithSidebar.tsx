@@ -16,7 +16,6 @@ export const PageWithSidebar = ({ children }: { children: JSX.Element }) => {
     setDataSyncs,
     projects: SyncedProjects,
     setProjects,
-    setCurrentProject,
     refreshDep,
     errors,
     setErrors,
@@ -66,9 +65,6 @@ export const PageWithSidebar = ({ children }: { children: JSX.Element }) => {
 
           setProjects([...projects, defaultGPTProject]);
           setDataSyncsFromProjects(projects);
-          if (projects.length === 0) {
-            setCurrentProject(null);
-          }
         })
         .catch((err) => {
           console.error(err);
@@ -87,10 +83,10 @@ export const PageWithSidebar = ({ children }: { children: JSX.Element }) => {
     errors,
     session.data,
     session.status,
-    setCurrentProject,
     setDataSyncs,
     setErrors,
     setProjects,
+    refreshDep,
   ]);
 
   return (

@@ -45,8 +45,26 @@ export default function App({
   const [errors, setErrors] = useState<Array<{ message: string }>>([]);
   const [refresh, setRefresh] = useState(false);
 
-  let componentToRender;
+  useEffect(() => {
+    const savedContext = localStorage.getItem("baseline.context");
+    if (savedContext) {
+      const parsedContext = JSON.parse(savedContext);
+      setCurrentProject(parsedContext.currentProject);
+    }
+  }, []);
 
+  useEffect(() => {
+    if (currentProject) {
+      localStorage.setItem(
+        "baseline.context",
+        JSON.stringify({
+          currentProject,
+        })
+      );
+    }
+  }, [currentProject]);
+
+  let componentToRender;
   if (PAGE_PATHS_WITH_SIDEBAR.includes(router.pathname)) {
     componentToRender = (
       <PageWithSidebar>
