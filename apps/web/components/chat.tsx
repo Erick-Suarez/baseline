@@ -1,5 +1,5 @@
 import { useCallback, useContext } from "react";
-import { RiRefreshLine } from "react-icons/ri";
+import { RiRefreshLine, RiQuestionFill } from "react-icons/ri";
 import { ChatInputBar } from "@/components/chatInputBar";
 import { useState, useRef, useEffect } from "react";
 
@@ -28,7 +28,13 @@ interface ChatEntry {
 const TIMEOUT_LIMIT = 30000;
 
 //TODO: Update props to take in user type
-export const Chat = ({ loggedInUser }: { loggedInUser: { name: string } }) => {
+export const Chat = ({
+  loggedInUser,
+  setModalIsOpen,
+}: {
+  loggedInUser: { name: string };
+  setModalIsOpen: React.Dispatch<React.SetStateAction<boolean>>;
+}) => {
   const { currentProject, projects, setCurrentProject } =
     useContext(BaselineContext);
   const router = useRouter();
@@ -185,13 +191,20 @@ export const Chat = ({ loggedInUser }: { loggedInUser: { name: string } }) => {
     <div className="flex h-[95vh] max-h-[1080px] w-[80vw] max-w-[1440px] flex-col px-2">
       <div className="mb-2 flex w-full justify-end">
         <button
-          className="group flex items-center gap-2 rounded-md p-2 hover:bg-indigo-200"
+          className="mr-5 flex items-center gap-2 rounded-md p-2 text-slate-600 hover:bg-indigo-200 hover:text-indigo-600"
+          onClick={() => {
+            setModalIsOpen((prev) => !prev);
+          }}
+        >
+          <RiQuestionFill className="h-5 w-5" />
+          <h1>Help</h1>
+        </button>
+        <button
+          className="flex items-center gap-2 rounded-md p-2 text-slate-600 hover:bg-indigo-200 hover:text-indigo-600"
           onClick={_handleResetChat}
         >
-          <RiRefreshLine className="h-5 w-5 text-slate-600 group-hover:text-indigo-600" />
-          <h1 className="text-slate-600 group-hover:text-indigo-600">
-            Reset Chat
-          </h1>
+          <RiRefreshLine className="h-5 w-5" />
+          <h1>Reset Chat</h1>
         </button>
       </div>
       <div className="mb-5 h-full w-full overflow-clip rounded-xl border border-slate-300 shadow-xl">

@@ -2,16 +2,21 @@ import { useState } from "react";
 import { Disclosure, Dialog as HeadlessDialog } from "@headlessui/react";
 import { RiArrowDropDownLine } from "react-icons/ri";
 
-export const BaselinePrimerDialog = () => {
-  let [isOpen, setIsOpen] = useState(true);
-
+export const BaselinePrimerDialog = ({
+  modalIsOpen,
+  setModalIsOpen,
+}: {
+  modalIsOpen: boolean;
+  setModalIsOpen: React.Dispatch<React.SetStateAction<boolean>>;
+}) => {
+  const [dontShowAgain, setDontShowAgain] = useState<boolean>(false);
   const _handleClose = () => {
-    setIsOpen(false);
+    setModalIsOpen(false);
   };
 
   return (
     <HeadlessDialog
-      open={isOpen}
+      open={modalIsOpen}
       onClose={_handleClose}
       className="relative z-50 bg-black"
     >
@@ -87,6 +92,23 @@ export const BaselinePrimerDialog = () => {
               </Disclosure.Panel>
             </Disclosure>
           </div>
+          {/* <div className="my-2 flex items-center">
+            <input
+              id="dont-show-primer-checkbox"
+              type="checkbox"
+              className="h-4 w-4 rounded border-gray-300 bg-gray-100 text-indigo-600 focus:ring-2 focus:ring-blue-500"
+              checked={dontShowAgain}
+              onChange={(e) => {
+                setDontShowAgain(e.target.checked);
+              }}
+            />
+            <label
+              htmlFor="dont-show-primer-checkbox"
+              className="ml-2 text-sm font-medium"
+            >
+              Don&apos;t Show again
+            </label>
+          </div> */}
           <button
             onClick={_handleClose}
             className="text-md rounded-md bg-indigo-600 px-8 py-2 text-white outline-none hover:bg-indigo-800"
