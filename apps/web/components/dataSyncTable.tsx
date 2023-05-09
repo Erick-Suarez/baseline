@@ -1,4 +1,4 @@
-import { useContext } from "react";
+import { useContext, useState, useMemo } from "react";
 import { BaselineContext } from "@/context/baselineContext";
 import {
   createEmbeddingFromRepositoryRequest,
@@ -6,7 +6,7 @@ import {
   Project,
 } from "@baselinedocs/shared";
 import { Disclosure, Menu } from "@headlessui/react";
-import { RiCheckFill, RiCloseFill, RiMoreFill } from "react-icons/ri";
+import { RiCheckFill, RiCloseFill, RiMoreFill, RiArrowDownLine, RiArrowUpLine } from "react-icons/ri";
 import { BarLoader } from "react-spinners";
 import { parseCookies } from "nookies";
 
@@ -20,10 +20,31 @@ export const ProjectDataTable = ({
   if (showErrorMessage) {
     projects = [];
   }
-  projects = projects.sort((project1, project2) =>
-    project1.display_name.localeCompare(project2.display_name)
-  );
-  projects = projects.filter((project) => project.id != "-1");
+  const [ projectsSortDirectionAsc, setProjectsSortDirectionAsc ] = useState(true);
+  const sortedProjects = useMemo(() => {
+    let sortableItems = [...projects.filter((project) => project.id != "-1")];
+    sortableItems.sort((project1, project2) => {
+      const project1_status_type = _getStatusOfProject(project1).type;
+      const project2_status_type = _getStatusOfProject(project2).type;
+
+      if (project1_status_type === ProjectBaselineStatus.READY && project2_status_type !== ProjectBaselineStatus.READY) {
+        return -1; // project1 is ready, so it should come before project2
+      } else if (project1_status_type !== ProjectBaselineStatus.READY && project2_status_type === ProjectBaselineStatus.READY) {
+        return 1; // project2 is ready, so it should come before project1
+      } else if (project1_status_type === ProjectBaselineStatus.IN_PROGRESS && project2_status_type === ProjectBaselineStatus.NOT_CREATED) {
+        return -1; // project1 is in progress, so it should come before project2
+      } else if (project1_status_type === ProjectBaselineStatus.NOT_CREATED && project2_status_type === ProjectBaselineStatus.IN_PROGRESS) {
+        return 1; // project2 is in progress, so it should come before project1
+      } else {
+        if (projectsSortDirectionAsc) {
+          return project1.display_name.localeCompare(project2.display_name);
+        } else {
+          return project2.display_name.localeCompare(project1.display_name);
+        }
+      }
+    });
+    return sortableItems;
+  }, [projects, projectsSortDirectionAsc]);
   const { forceRefresh } = useContext(BaselineContext);
 
   return (
@@ -32,7 +53,9 @@ export const ProjectDataTable = ({
         <thead className="sticky top-0 z-50 bg-slate-200 shadow">
           <tr>
             <th scope="col" className="px-6 py-3 shadow">
-              Projects({projects.length})
+              <button type ="button" onClick={() => setProjectsSortDirectionAsc(!projectsSortDirectionAsc)} style={{ display: 'inline-flex' }}>
+                Projects({sortedProjects.length}) {' '} {projectsSortDirectionAsc ? <RiArrowUpLine className="h-6 w-6 text-gray-500"/> : <RiArrowDownLine className="h-6 w-6 text-gray-500"/>}
+              </button>
             </th>
             <th scope="col" className="px-6 py-3 shadow">
               Source
@@ -44,7 +67,7 @@ export const ProjectDataTable = ({
           </tr>
         </thead>
         <tbody>
-          {projects.length === 0 && (
+          {sortedProjects.length === 0 && (
             <tr className="border-b bg-white">
               <th
                 scope="row"
@@ -65,7 +88,7 @@ export const ProjectDataTable = ({
               <td className="px-6 py-4"></td>
             </tr>
           )}
-          {projects.map((project, index) => {
+          {sortedProjects.map((project, index) => {
             const { type, data: projectStatus } = _getStatusOfProject(project);
             return (
               <tr key={`data_row_${index}`} className="border-b bg-white">
