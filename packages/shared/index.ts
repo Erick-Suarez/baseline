@@ -27,6 +27,8 @@ export interface deleteDataSyncRequest {
 export interface createEmbeddingFromRepositoryRequest {
   repo_id: string;
   repo_name: string;
+  include?: Array<string>;
+  exclude?: Array<string>;
 }
 
 export interface getDataSyncsForOrganizationRequest {
