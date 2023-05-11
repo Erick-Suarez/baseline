@@ -46,7 +46,8 @@ export const ProjectDataTable = ({
     return sortableItems;
   }, [projects, projectsSortDirectionAsc]);
   const { forceRefresh } = useContext(BaselineContext);
-
+  const defaultInclude = ["**/*.js", "**/*.jsx", "**/*.ts", "**/*.tsx", "**/*.py", "**/*.html", "**/*.css"];
+  const defaultExclude = ["**/.git/**", "**/.vscode/**", "**/node_modules/**", "**/dist/**"];
   return (
     <div className="max-h-[65vh] w-full flex-grow overflow-y-auto rounded-lg border-2 border-slate-200 pb-5 shadow-lg">
       <table className="text w-full text-left">
@@ -119,6 +120,8 @@ export const ProjectDataTable = ({
                                     {
                                       repo_id: project.id,
                                       repo_name: project.name,
+                                      include: defaultInclude,
+                                      exclude: defaultExclude,
                                     };
 
                                   fetch(

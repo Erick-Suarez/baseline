@@ -1,5 +1,6 @@
 import fs from "fs";
 import path from "path";
+import glob from "glob";
 import * as dotenv from "dotenv";
 import { supabaseIndexes } from "./supabase.js";
 import { OpenAIEmbeddings } from "langchain/embeddings/openai";
@@ -11,9 +12,6 @@ import chalk from "chalk";
 import * as math from "mathjs";
 
 dotenv.config();
-
-const VALID_EXT = [".js", ".jsx", ".ts", ".tsx", ".py", ".html", ".css"];
-const IGNORE_DIRECTORIES = [".git", ".vscode", "node_modules", "dist"];
 
 const chatModel = new ChatOpenAI({
   openAIApiKey: process.env.OPEN_AI_KEY,
@@ -67,30 +65,27 @@ function parseImports(content: string) {
 function loadFiles(
   baseDirectory: string,
   directory: string,
-  docs: Array<FileVector>
+  docs: Array<FileVector>,
+  include?: Array<string>,
+  exclude?: Array<string>
 ) {
-  const files = fs.readdirSync(directory, { withFileTypes: true });
-  files.forEach((file) => {
-    const filepath = path.join(directory, file.name);
-    if (file.isDirectory()) {
-      if (IGNORE_DIRECTORIES.includes(file.name)) {
-        return;
-      }
-      loadFiles(baseDirectory, filepath, docs);
-    }
-    if (VALID_EXT.includes(path.extname(file.name))) {
-      const filecontents = fs.readFileSync(filepath, "utf-8");
-      const importsList = parseImports(filecontents);
-      docs.push({
-        filecontents,
-        metadata: {
-          filename: file.name,
-          directory,
-          filepath: path.relative(baseDirectory, filepath),
-          importsList,
-        },
-      });
-    }
+  const files = glob.sync(include || "*", {
+    cwd: directory,
+    nodir: true,
+    ignore: exclude,
+  });
+  files.forEach((filepath) => {
+    const filecontents = fs.readFileSync(filepath, "utf-8");
+    const importsList = parseImports(filecontents);
+    docs.push({
+      filecontents,
+      metadata: {
+        filename: path.basename(filepath),
+        directory,
+        filepath: path.relative(baseDirectory, filepath),
+        importsList,
+      },
+    });
   });
 }
 
@@ -204,10 +199,12 @@ export async function deleteIndex(indexName: string, logger: any) {
 export async function startIngestion(
   directory: string,
   index_name: string,
-  logger: any
+  logger: any,
+  include?: Array<string>,
+  exclude?: Array<string>
 ) {
   const docs: Array<FileVector> = [];
-  loadFiles(directory, directory, docs);
+  loadFiles(directory, directory, docs, include, exclude);
 
   logger.info("Starting Ingestion...");
 

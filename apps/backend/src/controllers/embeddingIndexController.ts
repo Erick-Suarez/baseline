@@ -29,7 +29,7 @@ export async function createIndexFromRepository(
   req: Request<{}, {}, createEmbeddingFromRepositoryRequest>,
   res: Response
 ) {
-  const { repo_id, repo_name } = req.body;
+  const { repo_id, repo_name, include, exclude } = req.body;
 
   if (repo_id === undefined || repo_name === undefined) {
     req.log.info(`Request missing required keys`);
@@ -78,7 +78,7 @@ export async function createIndexFromRepository(
   // Launch child process
   req.log.info("Launching Child process to ingest repository");
   try {
-    await startIngestion(filepath, indexName, req.log);
+    await startIngestion(filepath, indexName, req.log, include, exclude);
     // Ingestion is done update DB entry
     await supabase
       .from("embedding_indexes")
