@@ -74,15 +74,16 @@ function loadFiles(
     nodir: true,
     ignore: exclude,
   });
-  files.forEach((filepath) => {
+  files.forEach((filename) => {
+    const filepath = path.join(directory, filename);
     const filecontents = fs.readFileSync(filepath, "utf-8");
     const importsList = parseImports(filecontents);
     docs.push({
       filecontents,
       metadata: {
-        filename: path.basename(filepath),
+        filename: filename,
         directory,
-        filepath: path.relative(baseDirectory, filepath),
+        filepath: path.relative(baseDirectory, filename),
         importsList,
       },
     });
