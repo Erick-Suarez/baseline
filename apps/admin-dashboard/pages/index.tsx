@@ -188,6 +188,7 @@ export default function Home() {
             e.preventDefault();
             createNewUser(newUserEmail, newUserName, newUserPassword).then(
               (data) => {
+                alert("User created");
                 forceRefresh();
               }
             );
@@ -253,6 +254,7 @@ export default function Home() {
         onSubmit={(e) => {
           e.preventDefault();
           createNewOrganization(newOrganizationName).then((data) => {
+            alert("Organization created");
             forceRefresh();
           });
 
