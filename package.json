@@ -12,8 +12,9 @@
   "scripts": {
     "dev-server": "lerna run dev --scope @baselinedocs/baseline-chat-backend --stream",
     "dev-web": "lerna run dev --scope @baslinedocs/baseline-web-next --stream",
-    "build": "npm i && npx lerna run build --ignore @baslinedocs/baseline-web-next && npx lerna bootstrap",
-    "dev": "npm run build && concurrently \"npm run dev-server\" \"npm run dev-web\""
+    "build": "npm i && npx lerna run build --ignore @baslinedocs/baseline-web-next --ignore @baselinedocs/admin-dashboard && npx lerna bootstrap",
+    "dev": "npm run build && concurrently \"npm run dev-server\" \"npm run dev-web\"",
+    "admin": "lerna run dev --scope @baselinedocs/admin-dashboard"
   },
   "dependencies": {
     "@types/jsonwebtoken": "^9.0.1"
