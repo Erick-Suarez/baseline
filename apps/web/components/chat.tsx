@@ -39,25 +39,56 @@ export const Chat = ({
     useContext(BaselineContext);
   const router = useRouter();
   const [socketConnection, setSocketConnection] = useState<Socket | null>(null);
-  const [chatBlockList, setChatBlockList] = useState<ChatEntry[]>([
-    {
-      type: ChatBlockType.AI,
-      data: "Welcome to Baseline! Ask questions about your codebase to get started",
-    },
-  ]);
+  const [chatBlockList, setChatBlockList] = useState<ChatEntry[]>([]);
   const [inputValue, setInputValue] = useState<string>("");
   const [waitingForResponse, setWaitingForResponse] = useState<boolean>(false);
   const [streamBuffer, setStreamBuffer] = useState<string[]>([]);
   const [errorState, setErrorState] = useState<ServerSocketError | null>(null);
   const chatBoxEnd = useRef(null);
 
+  // Show welcome message if there are no messages
+  const showWelcomeMessage = chatBlockList.length === 0;
+
+  const renderWelcomeMessage = useCallback((showDefaultGPTmessage: boolean) => {
+    // Show welcome message for Defualt Gpt
+    if (showDefaultGPTmessage) {
+      return (
+        <div className="absolute left-1/2 top-1/2 flex -translate-x-1/2 -translate-y-1/2 transform flex-col items-center">
+          <h1 className="font-bold text-slate-600">Welcome to Baseline!</h1>
+          <div className="mt-4 w-[800px] rounded-md border-slate-400  bg-gray-50 px-8  py-4 text-slate-500">
+            Note that this is DefaultGPT which should have the same behavior as
+            ChatGPT.
+          </div>
+          <div className="mt-4 w-[800px] rounded-md border-slate-400  bg-gray-50 px-8  py-4 text-slate-500">
+            If you want a chat model trained on a codebase then select one from
+            the sidebar
+          </div>
+        </div>
+      );
+    }
+
+    // Show welcome message for trained chat models
+    return (
+      <div className="absolute left-1/2 top-1/2 flex -translate-x-1/2 -translate-y-1/2 transform flex-col items-center">
+        <h1 className="font-bold text-slate-600">
+          Welcome to Baseline! Ask questions about your codebase.
+        </h1>
+        <h2 className="my-4 font-bold text-slate-600">Examples:</h2>
+        <div className="mb-4 w-[600px] rounded-md border-slate-400  bg-gray-50 px-8  py-4 text-slate-500">
+          Help me understand this component in our codebase?
+        </div>
+        <div className="mb-4 w-[600px] rounded-md border-slate-400 bg-gray-50 px-8 py-4 text-slate-500">
+          Why am I getting this error?
+        </div>
+        <div className="w-[600px] rounded-md border-slate-400 bg-gray-50 px-8 py-4 text-slate-500">
+          How would I modify this component so it can do something else?
+        </div>
+      </div>
+    );
+  }, []);
+
   const _resetState = () => {
-    setChatBlockList([
-      {
-        type: ChatBlockType.AI,
-        data: "Welcome to Baseline! Ask questions about your codebase to get started",
-      },
-    ]);
+    setChatBlockList([]);
     setInputValue("");
     setStreamBuffer([]);
     setWaitingForResponse(false);
@@ -66,12 +97,7 @@ export const Chat = ({
   useEffect(() => {
     _resetState();
 
-    setChatBlockList([
-      {
-        type: ChatBlockType.AI,
-        data: "Welcome to Baseline! Ask questions about your codebase to get started",
-      },
-    ]);
+    setChatBlockList([]);
     setInputValue("");
     setStreamBuffer([]);
     setWaitingForResponse(false);
@@ -207,7 +233,9 @@ export const Chat = ({
           <h1>Reset Chat</h1>
         </button>
       </div>
-      <div className="mb-5 h-full w-full overflow-clip rounded-xl border border-slate-300 shadow-xl">
+      <div className="relative mb-5 h-full w-full overflow-clip rounded-xl border border-slate-300 shadow-xl">
+        {showWelcomeMessage &&
+          renderWelcomeMessage(currentProject?.id === "-1")}
         <div className="flex h-full w-full flex-col-reverse overflow-y-auto pt-5">
           {errorState !== null ? (
             <ChatBlock
@@ -233,6 +261,10 @@ export const Chat = ({
           _handleSubmit();
         }}
       />
+      <p className="w-full text-center text-sm text-slate-400">
+        Baseline is still in Beta. Please be patient with any bugs or
+        performance issues and submit feedback so we can improve the product
+      </p>
     </div>
   );
 };
