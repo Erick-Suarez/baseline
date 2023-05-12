@@ -36,21 +36,46 @@ export async function getRepositories(accessToken: string) {
   }>;
 }
 
+export async function getHeadSha(
+  accessToken: string,
+  repo: {
+    repo_name: string;
+    repo_owner: string;
+  },
+): Promise<string> {
+  const octokit = new Octokit({
+    auth: accessToken,
+  });
+
+  const response = await octokit.request("GET /repos/{owner}/{repo}/git/ref/{ref}", {
+    owner: repo.repo_owner,
+    repo: repo.repo_name,
+    ref: "heads/master",
+    headers: {
+      "X-GitHub-Api-Version": "2022-11-28",
+    },
+  });
+
+  return response.data.object.sha;
+}
+
 export async function downloadRepository(
   accessToken: string,
   repo: {
     repo_name: string;
     repo_owner: string;
   },
+  sha: string,
   logger: any
 ) {
   const octokit = new Octokit({
     auth: accessToken,
   });
 
-  const tarball = await octokit.request("GET /repos/{owner}/{repo}/tarball/", {
+  const tarball = await octokit.request("GET /repos/{owner}/{repo}/tarball/{sha}", {
     owner: repo.repo_owner,
     repo: repo.repo_name,
+    sha: sha,
     headers: {
       "X-GitHub-Api-Version": "2022-11-28",
     },

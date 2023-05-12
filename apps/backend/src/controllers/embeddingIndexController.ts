@@ -3,9 +3,8 @@ import {
   createEmbeddingFromRepositoryRequest,
   deleteEmbeddingFromRepositoryRequest,
 } from "@baselinedocs/shared";
-import { fork } from "child_process";
 import { supabase } from "../lib/supabase.js";
-import { downloadRepository } from "../lib/github.js";
+import { downloadRepository, getHeadSha } from "../lib/github.js";
 import { deleteIndex, startIngestion } from "../lib/indexes.js";
 import fs from "fs";
 import * as dotenv from "dotenv";
@@ -62,11 +61,22 @@ export async function createIndexFromRepository(
   }
 
   const validatedData = data as DataSyncAccessTokenFromRepositoryModel;
+  let sha: string
+  try {
+    sha = await getHeadSha(
+      validatedData.access_token_data.access_token,
+      validatedData.repos[0]
+    );
+  } catch (error) {
+    console.error(error);
+    throw "Error obtaining HEAD sha.";
+  }
   let filepath: string;
   try {
     filepath = await downloadRepository(
       validatedData.access_token_data.access_token,
       validatedData.repos[0],
+      sha,
       req.log
     );
   } catch (error) {
@@ -82,7 +92,7 @@ export async function createIndexFromRepository(
     // Ingestion is done update DB entry
     await supabase
       .from("embedding_indexes")
-      .update({ ready: true })
+      .update({ ready: true, last_repo_commit: sha })
       .eq("embedding_index_id", createIndexResponse.data.embedding_index_id);
 
     fs.rmSync(filepath, { recursive: true });
