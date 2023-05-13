@@ -17,6 +17,7 @@ const chatModel = new ChatOpenAI({
   openAIApiKey: process.env.OPEN_AI_KEY,
   temperature: 0.7,
 });
+const MAX_CONTENT_SIZE = 4000;
 
 const embeddings = new OpenAIEmbeddings();
 
@@ -45,8 +46,10 @@ interface Metadata {
   filepath: string;
   importsList: Array<{ variable: string; import: string }>;
 }
-interface FileVector {
-  filecontents: string;
+interface FileIndex {
+  index_name: string;
+  content: string;
+  embedding: number[];
   metadata: Metadata;
 }
 
@@ -62,10 +65,11 @@ function parseImports(content: string) {
   });
 }
 
-function loadFiles(
+export async function createFileIndexes(
   baseDirectory: string,
   directory: string,
-  docs: Array<FileVector>,
+  indexName: string,
+  logger: any,
   include?: Array<string>,
   exclude?: Array<string>
 ) {
@@ -74,88 +78,75 @@ function loadFiles(
     nodir: true,
     ignore: exclude,
   });
-  files.forEach((filename) => {
-    const filepath = path.join(directory, filename);
-    const filecontents = fs.readFileSync(filepath, "utf-8");
-    const importsList = parseImports(filecontents);
-    docs.push({
-      filecontents,
-      metadata: {
+
+  await Promise.all(
+    files.map(async (filename) => {
+      const filepath = path.join(directory, filename);
+      const filecontents = await fs.promises.readFile(filepath, "utf-8");
+      const importsList = parseImports(filecontents);
+      const metadata = {
         filename: filename,
         directory,
         filepath: path.relative(baseDirectory, filename),
         importsList,
-      },
-    });
-  });
+      }
+
+      for (let i = 0; i < filecontents.length; i += MAX_CONTENT_SIZE) {
+        logger.info(
+          `Creating embedding for: ${metadata.filepath}, chunk: [${i},${i + MAX_CONTENT_SIZE}]`
+        );
+        const embeddingFileContents = filecontents.substring(i, i + MAX_CONTENT_SIZE);
+        const summary = await codeSummaryChain.call({
+          code: embeddingFileContents,
+        });
+
+        logger.info(`file: ${metadata.filename} - ${summary.text}`);
+        const rawText =
+          `Filename: ${metadata.filename}\nFilepath: ${metadata.filepath}\nSummary:${summary.text}\n\n` +
+          embeddingFileContents;
+        const embedding = await embeddings.embedQuery(rawText);
+        const fileIndex = {
+          index_name: indexName,
+          content: rawText,
+          embedding,
+          metadata: {
+            summary: summary.text,
+            ...metadata,
+          },
+        }
+        await uploadFileIndex(fileIndex, logger);
+      }
+    })
+  );
 }
 
-async function uploadVectors(
-  docs: Array<FileVector>,
-  index_name: string,
+export async function uploadFileIndex(
+  file_embedding: FileIndex,
   logger: any
 ) {
-  const maxSize = 4000;
-  for (const { filecontents, metadata } of docs) {
-    for (let i = 0; i < filecontents.length; i += maxSize) {
-      const maxRetries = 3;
-      for (let retry = 0; retry < maxRetries; retry++) {
-        logger.info(
-          `Uploading: ${metadata.filepath}, chunk: [${i},${i + maxSize}]`
-        );
-        try {
-          await uploadEmedding(
-            {
-              filecontents: filecontents.substring(i, i + maxSize),
-              metadata,
-            },
-            index_name,
-            logger
-          );
-          break;
-        } catch (err) {
-          logger.error(chalk.red(err));
-          logger.info(
-            chalk.red(
-              `Error at ${metadata.filepath}, length of content: ${filecontents.length}`
-            )
-          );
-          logger.info(chalk.blue(`retrying upload ${retry}/${maxRetries}`));
-          await new Promise((resolve, err) => {
-            setTimeout(() => {
-              resolve("");
-            }, 10000);
-          });
-        }
-      }
+  const maxRetries = 3;
+  for (let retry = 0; retry < maxRetries; retry++) {
+    logger.info(
+      `Uploading a chunk of: ${file_embedding.metadata.filepath}, attempt: ${retry + 1}`
+    );
+    try {
+      await supabaseIndexes.rpc("insert_embedding", file_embedding);
+      break;
+    } catch (err) {
+      console.error(chalk.red(err));
+      logger.info(
+        chalk.red(
+          `Error at ${file_embedding.metadata.filepath}, length of content: ${file_embedding.content.length}`
+        )
+      );
+      logger.info(chalk.blue(`retrying upload ${retry}/${maxRetries}`));
+      await new Promise((resolve, err) => {
+        setTimeout(() => {
+          resolve("");
+        }, 10000);
+      });
     }
   }
-}
-
-async function uploadEmedding(
-  vector: FileVector,
-  indexName: string,
-  logger: any
-) {
-  const { filecontents, metadata } = vector;
-  const summary = await codeSummaryChain.call({
-    code: filecontents,
-  });
-
-  logger.info(`file: ${metadata.filename} - ${summary.text}`);
-  const content =
-    `Filename: ${metadata.filename}\nFilepath: ${metadata.filepath}\nSummary:${summary.text}\n\n` +
-    filecontents;
-  const embedding = await embeddings.embedQuery(content);
-  const record = await supabaseIndexes.rpc("insert_embedding", {
-    index_name: indexName,
-    content,
-    embedding,
-    metadata: {
-      summary: summary.text,
-      ...metadata,
-    },
-  });
 }
 
 async function createIndex(indexName: string, logger: any) {
@@ -198,23 +189,18 @@ export async function deleteIndex(indexName: string, logger: any) {
 
 export async function startIngestion(
   directory: string,
-  index_name: string,
+  indexName: string,
   logger: any,
   include?: Array<string>,
   exclude?: Array<string>
 ) {
-  const docs: Array<FileVector> = [];
+  logger.info("Starting Ingestion...");
   logger.info(
     { include, exclude },
-    `included: ${include},  excluded: ${exclude}`
+    `including: ${include},  excluding: ${exclude}`
   );
-  loadFiles(directory, directory, docs, include, exclude);
-
-  logger.info("Starting Ingestion...");
-
-  await createIndex(index_name, logger);
-  await uploadVectors(docs, index_name, logger);
-
+  await createIndex(indexName, logger);
+  await createFileIndexes(directory, directory, indexName, logger, include, exclude);
   logger.info("Ingestion done!");
 }
 

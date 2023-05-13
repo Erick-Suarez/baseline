@@ -1,3 +1,4 @@
+import { RepositoryDiff } from "@baselinedocs/shared";
 import github from "./github.js";
 import gitlab from "./gitlab.js";
 
@@ -61,6 +62,22 @@ export async function downloadRepository(
   }
   if (provider === PROVIDERS.gitlab) {
     return gitlab.downloadRepository(accessToken, repo, sha, logger);
+  }
+  throw new Error(`Unsuported Provider: ${provider}`);
+}
+
+export async function getDiff(
+  provider: string,
+  accessToken: string,
+  repo: {
+    repo_name: string;
+    repo_owner: string;
+  },
+  base: string,
+  head: string
+): Promise<RepositoryDiff> {
+  if (provider === PROVIDERS.github) {
+    return github.getDiff(accessToken, repo, base, head);
   }
   throw new Error(`Unsuported Provider: ${provider}`);
 }

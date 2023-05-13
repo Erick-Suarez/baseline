@@ -24,14 +24,6 @@ export interface deleteDataSyncRequest {
   organization_id: string;
 }
 
-export interface createEmbeddingFromRepositoryRequest {
-  repo_id: string;
-  repo_name: string;
-  provider: string;
-  include?: Array<string>;
-  exclude?: Array<string>;
-}
-
 export interface getDataSyncsForOrganizationRequest {
   organization_id: string;
 }
@@ -87,6 +79,21 @@ export interface Project {
   index_list: Array<EmbeddingIndex>;
 }
 
+export interface createEmbeddingFromRepositoryRequest {
+  repo_id: string;
+  repo_name: string;
+  provider: string;
+  include?: Array<string>;
+  exclude?: Array<string>;
+}
+
+export interface updateEmbeddingFromRepositoryRequest {
+  repo_id: string;
+  provider: string;
+  include?: Array<string>;
+  exclude?: Array<string>;
+}
+
 export interface deleteEmbeddingFromRepositoryRequest {
   repo_id: string;
 }
@@ -104,6 +111,12 @@ export interface Record {
 export interface ServerSocketError {
   type: number;
   message: string;
+}
+
+export interface RepositoryDiff {
+  files_added: Array<string>;
+  files_modified: Array<string>;
+  files_removed: Array<string>;
 }
 
 export interface RelatedEmbeddings extends Array<[Record, number]> {}

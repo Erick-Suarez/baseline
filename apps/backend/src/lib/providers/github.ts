@@ -3,6 +3,9 @@ import { Octokit } from "@octokit/core";
 import _ from "lodash";
 import fs from "fs";
 import path from "path";
+import {
+  RepositoryDiff
+} from "@baselinedocs/shared";
 
 const github: Record<string, any> = {};
 
@@ -71,6 +74,60 @@ github.getHeadSha = async function (
   );
 
   return response.data.object.sha;
+};
+
+github.getDiff = async function (
+  accessToken: string,
+  repo: {
+    repo_name: string;
+    repo_owner: string;
+  },
+  base: string,
+  head: string
+): Promise<RepositoryDiff> {
+  const octokit = new Octokit({
+    auth: accessToken,
+  });
+
+  const response = await octokit.request("GET /repos/{owner}/{repo}/compare/{base}...{head}", {
+    owner: repo.repo_owner,
+    repo: repo.repo_name,
+    base: base,
+    head: head,
+    headers: {
+      "X-GitHub-Api-Version": "2022-11-28",
+    },
+  });
+  const files_added: Array<string> = [];
+  const files_modified: Array<string> = [];
+  const files_removed: Array<string> = [];
+  response.data.files?.forEach((file) => {
+    switch(file.status) {
+      case 'added':
+        files_added.push(file.filename);
+        break;
+      case 'modified':
+        files_modified.push(file.filename);
+        break;     
+      case 'removed':
+        files_removed.push(file.filename);
+        break;
+      case 'renamed':
+        files_added.push(file.filename);
+        if(file.previous_filename) {
+          files_removed.push(file.previous_filename);
+        }
+        break;
+      default:
+        console.error('Invalid file status: ', file.status);  
+    }
+  });
+
+  return {
+    files_added,
+    files_modified,
+    files_removed
+  };
 };
 
 github.downloadRepository = async function (

@@ -12,6 +12,7 @@ import {
 import { BarLoader } from "react-spinners";
 import { parseCookies } from "nookies";
 import { CreateBaselineModal } from "@/components/createBaselineModal";
+import { UpdateBaselineModal } from "@/components/updateBaselineModal";
 
 const DEFAULT_INCLUDE = [
   "**/*.js",
@@ -84,9 +85,26 @@ export const ProjectDataTable = ({
   }, [projects, projectsSortDirectionAsc]);
   const { forceRefresh } = useContext(BaselineContext);
 
-  const renderModal = (project: Project) => {
+  const renderCreateModal = (project: Project) => {
     setModalToRender(
       <CreateBaselineModal
+        modalIsOpen={true}
+        handleModalClose={() => {
+          setModalToRender(null);
+        }}
+        includeValue={includeValue}
+        setIncludeValue={setIncludeValue}
+        excludeValue={excludeValue}
+        setExcludeValue={setExcludeValue}
+        projectData={project}
+        forceRefresh={forceRefresh}
+      />
+    );
+  };
+
+  const renderUpdateModal = (project: Project) => {
+    setModalToRender(
+      <UpdateBaselineModal
         modalIsOpen={true}
         handleModalClose={() => {
           setModalToRender(null);
@@ -181,7 +199,7 @@ export const ProjectDataTable = ({
                             <button
                               className="w-full p-2 hover:text-indigo-600"
                               onClick={(event) => {
-                                renderModal(project);
+                                renderCreateModal(project);
                               }}
                             >
                               Create Baseline
@@ -198,9 +216,8 @@ export const ProjectDataTable = ({
                                     method: "DELETE",
                                     headers: {
                                       "Content-Type": "application/json",
-                                      Authorization: `BEARER ${
-                                        parseCookies()["baseline.access-token"]
-                                      }`,
+                                      Authorization: `BEARER ${parseCookies()["baseline.access-token"]
+                                        }`,
                                     },
                                     body: JSON.stringify({
                                       repo_id: project.id,
@@ -222,11 +239,23 @@ export const ProjectDataTable = ({
                           </Menu.Item>
                         )}
                         {type === ProjectBaselineStatus.READY && (
-                          <Menu.Item>
-                            <button className="w-full border-t border-slate-200 p-2 hover:text-indigo-600">
-                              Resync Baseline
-                            </button>
-                          </Menu.Item>
+                          <>
+                            <Menu.Item>
+                              <button
+                                className="w-full p-2 hover:text-indigo-600"
+                                onClick={(event) => {
+                                  renderUpdateModal(project);
+                                }}
+                              >
+                                Update Baseline
+                              </button>
+                            </Menu.Item>
+                            <Menu.Item>
+                              <button className="w-full border-t border-slate-200 p-2 hover:text-indigo-600">
+                                Resync Baseline
+                              </button>
+                            </Menu.Item>
+                          </>
                         )}
                       </Menu.Items>
                     </Menu>
