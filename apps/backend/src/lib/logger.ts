@@ -18,7 +18,7 @@ const loggerMiddleware = pinoHttp({
 
   // Define a custom receive message
   customReceivedMessage: function (req, res) {
-    return "Request received: " + req.method;
+    return "Request received: " + req.method + " " + req.url;
   },
 
   // Define a custom error message
