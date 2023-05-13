@@ -75,7 +75,7 @@ export const Chat = ({
         </h1>
         <h2 className="my-4 font-bold text-slate-600">Examples:</h2>
         <div className="mb-4 w-[600px] rounded-md border-slate-400  bg-gray-50 px-8  py-4 text-slate-500">
-          Help me understand this component in our codebase?
+          Help me understand this component in our codebase.
         </div>
         <div className="mb-4 w-[600px] rounded-md border-slate-400 bg-gray-50 px-8 py-4 text-slate-500">
           Why am I getting this error?
