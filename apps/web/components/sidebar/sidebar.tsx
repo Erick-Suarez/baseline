@@ -27,7 +27,12 @@ const _bottomSection = (
       Log out
       <RiLogoutBoxRLine />
     </button>
-    <p className="font-semibold text-slate-600">Powered by Baseline</p>
+    <p className="relative font-semibold text-slate-600">
+      Powered by Baseline{" "}
+      <span className="rounded-full bg-indigo-200 px-2 py-1 text-xs text-indigo-600">
+        Beta
+      </span>
+    </p>
   </div>
 );
 

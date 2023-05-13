@@ -68,9 +68,9 @@ export const PageWithSidebar = ({ children }: { children: JSX.Element }) => {
         })
         .catch((err) => {
           console.error(err);
+
           setErrors([
             { message: "Error connecting to server, please try again later" },
-            ...errors,
           ]);
         });
     };
@@ -80,7 +80,6 @@ export const PageWithSidebar = ({ children }: { children: JSX.Element }) => {
     }
   }, [
     dataSyncs.github,
-    errors,
     session.data,
     session.status,
     setDataSyncs,
