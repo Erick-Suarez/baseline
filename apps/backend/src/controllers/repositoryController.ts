@@ -22,7 +22,7 @@ export async function geRepositoriesWithEmbeddingsForOrganizationId(
     .eq("data_syncs.organization_id", organization_id);
 
   if (error || !data) {
-    console.error(error);
+    req.log.error(error);
     return res.sendStatus(500);
   }
 

@@ -22,7 +22,7 @@ export async function updateUserDisplayName(
     .eq("user_id", user_id);
 
   if (error) {
-    console.error(error);
+    req.log.error(error);
     return res.sendStatus(500);
   }
 
@@ -50,7 +50,7 @@ export async function updateUserPassword(
     .maybeSingle();
 
   if (error || !data) {
-    console.error(error);
+    req.log.error(error);
     return res.sendStatus(500);
   }
 
@@ -64,7 +64,7 @@ export async function updateUserPassword(
       .eq("user_id", user_id);
 
     if (error) {
-      console.error(error);
+      req.log.error(error);
       return res.sendStatus(500);
     }
 

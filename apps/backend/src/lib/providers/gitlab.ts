@@ -22,7 +22,6 @@ gitlab.authenticate = async function (code: any) {
 };
 
 gitlab.getRepositories = async function (accessToken: string) {
-  console.log("gitlab.getRepositories");
   const currentUser = await getCurrentUser(accessToken);
   const groups = await getCurrentUsersGroups(accessToken, currentUser.id);
   const projects = await getCurrentUsersProjects(accessToken, currentUser.id);
@@ -130,9 +129,6 @@ gitlab.downloadRepository = async function (
   sha: string,
   logger: any
 ) {
-  console.log("gitlab.downloadRepository");
-  console.log("accessToken: ", accessToken);
-  console.log("repo: ", sha);
   //@ts-ignore
   const tarball = await axios.get(
     `https://gitlab.com/api/v4/projects/${repo.provider_repo_id}/repository/archive.tar?sha=${sha}`,
@@ -180,7 +176,6 @@ function extractFilenameFromContentDisposition(data: string) {
   if (!matches) {
     return null;
   }
-  console.log("matches: ", matches[1]);
   return JSON.parse(matches[1]);
 }
 

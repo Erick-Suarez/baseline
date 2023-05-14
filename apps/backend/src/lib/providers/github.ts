@@ -46,7 +46,7 @@ github.getRepositories = async function (accessToken: string) {
   }>;
 };
 
-export async function getHeadSha(
+github.getHeadSha = async function (
   accessToken: string,
   repo: {
     repo_name: string;
@@ -71,7 +71,7 @@ export async function getHeadSha(
   );
 
   return response.data.object.sha;
-}
+};
 
 github.downloadRepository = async function (
   accessToken: string,

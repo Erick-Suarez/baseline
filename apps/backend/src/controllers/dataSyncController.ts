@@ -77,7 +77,7 @@ export async function getDataSyncsForOrganization(
     .eq("organization_id", organization_id);
 
   if (error || !data) {
-    console.error(error);
+    req.log.error(error);
     return res.status(500).send();
   }
 
@@ -127,7 +127,7 @@ export async function deleteDataSync(
     reposFromOrganizationRequest.error ||
     !reposFromOrganizationRequest.data
   ) {
-    console.error(reposFromOrganizationRequest.error);
+    req.log.error(reposFromOrganizationRequest.error);
     return res.status(500).send();
   }
 
@@ -148,7 +148,7 @@ export async function deleteDataSync(
     .eq("organization_id", organization_id);
 
   if (error) {
-    console.error(error);
+    req.log.error(error);
     return res.status(500).send();
   }
 

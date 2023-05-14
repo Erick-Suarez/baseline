@@ -40,7 +40,7 @@ export async function createIndexFromRepository(
   const indexName = _.snakeCase(`${repo_name}-${repo_id}`.toLowerCase());
   const createIndexResponse = await _createIndex(indexName, repo_id);
   if (createIndexResponse.error || !createIndexResponse.data) {
-    console.error(createIndexResponse.error);
+    req.log.error(createIndexResponse.error);
     return res.sendStatus(500);
   }
 
@@ -58,7 +58,7 @@ export async function createIndexFromRepository(
     .maybeSingle();
 
   if (error || !data) {
-    console.error(error);
+    req.log.error(error);
     throw error;
   }
   const validatedData = data as DataSyncAccessTokenFromRepositoryModel;
@@ -70,7 +70,7 @@ export async function createIndexFromRepository(
       validatedData.repos[0]
     );
   } catch (error) {
-    console.error(error);
+    req.log.error(error);
     throw "Error obtaining HEAD sha.";
   }
   let filepath: string;
@@ -83,7 +83,7 @@ export async function createIndexFromRepository(
       req.log
     );
   } catch (error) {
-    console.error(error);
+    req.log.error(error);
     throw "Error downloading repository";
   }
 
@@ -104,7 +104,7 @@ export async function createIndexFromRepository(
     // TODO: If any part fails we should reset the DB so the user can try again, or we should try to be ATOMIC and not save unless everything is successfull
     // TODO: This process might be flaky too so we should revert to beginning and retry, Also might want to find a way to deal with server restarts
 
-    console.error(error);
+    req.log.error(error);
   }
 }
 
@@ -125,7 +125,7 @@ export async function deleteIndexForRepository(
     .eq("repo_id", repo_id);
 
   if (embeddingIndexInfo.error || !embeddingIndexInfo.data) {
-    console.error(embeddingIndexInfo.error);
+    req.log.error(embeddingIndexInfo.error);
     return res.status(500).send();
   }
 
@@ -141,7 +141,7 @@ export async function deleteIndexForRepository(
     .eq("repo_id", repo_id);
 
   if (embeddingIndexDelete.error) {
-    console.error(embeddingIndexDelete.error);
+    req.log.error(embeddingIndexDelete.error);
     return res.status(500).send();
   }
 

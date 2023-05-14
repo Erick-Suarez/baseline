@@ -1,6 +1,6 @@
 import fs from "fs";
 import path from "path";
-import glob from "glob";
+import { glob } from "glob";
 import * as dotenv from "dotenv";
 import { supabaseIndexes } from "./supabase.js";
 import { OpenAIEmbeddings } from "langchain/embeddings/openai";
@@ -69,7 +69,6 @@ function loadFiles(
   include?: Array<string>,
   exclude?: Array<string>
 ) {
-  // @ts-ignore
   const files = glob.sync(include || "*", {
     cwd: directory,
     nodir: true,
@@ -115,7 +114,7 @@ async function uploadVectors(
           );
           break;
         } catch (err) {
-          console.error(chalk.red(err));
+          logger.error(chalk.red(err));
           logger.info(
             chalk.red(
               `Error at ${metadata.filepath}, length of content: ${filecontents.length}`
@@ -157,7 +156,6 @@ async function uploadEmedding(
       ...metadata,
     },
   });
-  logger.info(record);
 }
 
 async function createIndex(indexName: string, logger: any) {
@@ -169,7 +167,7 @@ async function createIndex(indexName: string, logger: any) {
     }
   );
   if (indexError) {
-    console.error(indexError);
+    logger.error(indexError);
     return;
   }
   if (data) {
@@ -188,7 +186,7 @@ export async function deleteIndex(indexName: string, logger: any) {
     }
   );
   if (deleteError) {
-    console.error(deleteError);
+    logger.error(deleteError);
     return;
   }
   if (data) {
@@ -206,6 +204,10 @@ export async function startIngestion(
   exclude?: Array<string>
 ) {
   const docs: Array<FileVector> = [];
+  logger.info(
+    { include, exclude },
+    `included: ${include},  excluded: ${exclude}`
+  );
   loadFiles(directory, directory, docs, include, exclude);
 
   logger.info("Starting Ingestion...");
@@ -239,7 +241,7 @@ export async function similaritySearchWithScore(
     number_of_embedding_to_return: embeddingsToReturn,
   });
   if (error) {
-    console.error(error);
+    logger.error(error);
     return [];
   }
   const result: RelatedEmbeddings = [];
