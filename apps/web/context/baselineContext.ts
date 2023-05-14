@@ -1,6 +1,7 @@
 import { Project } from "@baselinedocs/shared";
 import { DataSyncs } from "@/types/project";
 import { createContext } from "react";
+import { Alert } from "@/components/alerts";
 
 export const BaselineContext = createContext<{
   currentProject: Project | null;
@@ -11,14 +12,8 @@ export const BaselineContext = createContext<{
   setDataSyncs: React.Dispatch<React.SetStateAction<DataSyncs>>;
   refreshDep: boolean; // Dependency other pages will need to subscribe to if forceRefresh() should also refresh that page
   forceRefresh: () => void;
-  errors: Array<{ message: string }>;
-  setErrors: React.Dispatch<
-    React.SetStateAction<
-      Array<{
-        message: string;
-      }>
-    >
-  >;
+  errors: Array<Alert>;
+  setErrors: React.Dispatch<React.SetStateAction<Array<Alert>>>;
 }>({
   currentProject: null,
   setCurrentProject: () => {},

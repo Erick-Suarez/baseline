@@ -20,6 +20,7 @@ import { PageWithSidebar } from "@/components/layouts/pageWithSidebar";
 import { GetServerSideProps, GetServerSidePropsContext } from "next/types";
 import { Session } from "next-auth";
 import { GoogleAnalytics } from "nextjs-google-analytics";
+import { Alert } from "@/components/alerts";
 
 export const defaultGPTProject: Project = {
   id: "-1",
@@ -42,7 +43,7 @@ export default function App({
   const [dataSyncs, setDataSyncs] = useState<DataSyncs>({
     github: false,
   });
-  const [errors, setErrors] = useState<Array<{ message: string }>>([]);
+  const [errors, setErrors] = useState<Array<Alert>>([]);
   const [refresh, setRefresh] = useState(false);
 
   useEffect(() => {

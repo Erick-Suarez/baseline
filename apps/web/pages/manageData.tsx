@@ -26,6 +26,7 @@ export default function ManageDataPage({}: {}) {
     projects: SyncedProjects,
     setProjects,
     refreshDep,
+    setErrors,
   } = useContext(BaselineContext);
   const router = useRouter();
   const [initialLoadComplete, setInitialLoadComplete] =
@@ -61,7 +62,12 @@ export default function ManageDataPage({}: {}) {
           },
         }
       )
-        .then((res) => res.json())
+        .then((res) => {
+          if (!res.ok) {
+            throw new Error(`Server responded with ${res.status}`);
+          }
+          return res.json();
+        })
         .then((data: geRepositoriesWithEmbeddingsForOrganizationIdResponse) => {
           const projects: Array<Project> = [];
 
@@ -80,6 +86,14 @@ export default function ManageDataPage({}: {}) {
         })
         .catch((err) => {
           console.error(err);
+          setErrors([
+            {
+              message:
+                "Error connecting to server, please try re-logging or servers may be down.",
+              type: 500,
+            },
+          ]);
+
           setErrorDuringFetching(true);
         })
         .finally(() => {
@@ -112,6 +126,7 @@ export default function ManageDataPage({}: {}) {
     setDataSyncs,
     setProjects,
     refreshDep,
+    setErrors,
   ]);
 
   if (!initialLoadComplete) {

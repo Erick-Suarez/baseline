@@ -8,6 +8,7 @@ import { defaultGPTProject } from "@/pages/_app";
 import { useSession } from "next-auth/react";
 import { parseCookies } from "nookies";
 import { useEffect, useState, useContext } from "react";
+import { Alerts } from "../alerts";
 
 export const PageWithSidebar = ({ children }: { children: JSX.Element }) => {
   const session = useSession();
@@ -49,7 +50,12 @@ export const PageWithSidebar = ({ children }: { children: JSX.Element }) => {
           },
         }
       )
-        .then((res) => res.json())
+        .then((res) => {
+          if (!res.ok) {
+            throw new Error(`Server responded with ${res.status}`);
+          }
+          return res.json();
+        })
         .then((data: geRepositoriesWithEmbeddingsForOrganizationIdResponse) => {
           const projects: Array<Project> = [];
 
@@ -70,7 +76,11 @@ export const PageWithSidebar = ({ children }: { children: JSX.Element }) => {
           console.error(err);
 
           setErrors([
-            { message: "Error connecting to server, please try again later" },
+            {
+              message:
+                "Error connecting to server, please try re-logging or servers may be down.",
+              type: 500,
+            },
           ]);
         });
     };
@@ -89,8 +99,10 @@ export const PageWithSidebar = ({ children }: { children: JSX.Element }) => {
   ]);
 
   return (
-    <div className="flex h-[100vh] w-[100vw]">
+    <div className="relative flex h-[100vh] w-[100vw]">
+      {errors.length > 0 && <Alerts alertsList={errors} />}
       <Sidebar />
+
       <div className="h-full w-full flex-grow">{children}</div>
     </div>
   );
