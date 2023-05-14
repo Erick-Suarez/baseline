@@ -1,11 +1,7 @@
 import { useContext, useState, useMemo } from "react";
 import { BaselineContext } from "@/context/baselineContext";
-import {
-  createEmbeddingFromRepositoryRequest,
-  EmbeddingIndex,
-  Project,
-} from "@baselinedocs/shared";
-import { Disclosure, Menu } from "@headlessui/react";
+import { Project } from "@baselinedocs/shared";
+import { Menu } from "@headlessui/react";
 import {
   RiCheckFill,
   RiCloseFill,

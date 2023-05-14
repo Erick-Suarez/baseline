@@ -1,5 +1,5 @@
 import { Request, Response } from "express";
-import { authGithub, getRepositories } from "../lib/github.js";
+import { authenticate, getRepositories } from "../lib/providers/index.js";
 import {
   DATA_SYNC_SOURCES,
   deleteDataSyncRequest,
@@ -12,22 +12,26 @@ import * as dotenv from "dotenv";
 
 dotenv.config();
 
-// Sync Github Repositories to the Database by organization_id
+// Sync Repositories to the Database by organization_id
 // Returns object with error value set to null on succes
-export async function createGithubDataSyncForOrganization(
+export async function createDataSyncForOrganization(
   organization_id: number,
-  callback_code: string
+  callback_code: string,
+  provider: string
 ) {
   // The req.query object has the query params that were sent to this route.
-  const access_data = await authGithub(callback_code);
+  const access_data = await authenticate(provider, callback_code);
 
-  const repositories = await getRepositories(access_data.access_token);
+  const repositories = await getRepositories(
+    provider,
+    access_data.access_token
+  );
 
   // Save datasync
   const { data, error } = await supabase
     .from("data_syncs")
     .insert({
-      source: "github",
+      source: provider,
       access_token_data: access_data,
       organization_id,
     })
@@ -42,9 +46,11 @@ export async function createGithubDataSyncForOrganization(
   // Save repositories
   for await (const repository of repositories) {
     const { error } = await supabase.from("repos").insert({
+      provider_repo_id: repository.id,
       repo_name: repository.name,
       full_name: repository.full_name,
-      repo_owner: repository.owner.login,
+      repo_owner: repository.owner,
+      default_branch: repository.default_branch,
       data_sync_id,
     });
 
@@ -78,6 +84,7 @@ export async function getDataSyncsForOrganization(
   /* Insert other data sources here as we add support for them */
   const syncedSources: getDataSyncsForOrganizationResponse = {
     github: false,
+    gitlab: false,
   };
 
   data.forEach((data_sync) => {
@@ -85,6 +92,8 @@ export async function getDataSyncsForOrganization(
       case DATA_SYNC_SOURCES.GITHUB:
         syncedSources.github = true;
         break;
+      case DATA_SYNC_SOURCES.GITLAB:
+        syncedSources.gitlab = true;
       default:
         break;
     }

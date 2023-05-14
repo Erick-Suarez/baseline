@@ -19,7 +19,7 @@ export const BaselineContext = createContext<{
   setCurrentProject: () => {},
   projects: [],
   setProjects: () => {},
-  dataSyncs: { github: false },
+  dataSyncs: { github: false, gitlab: false },
   setDataSyncs: () => {},
   refreshDep: false,
   forceRefresh: () => {},

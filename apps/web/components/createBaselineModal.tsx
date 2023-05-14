@@ -87,6 +87,7 @@ export const CreateBaselineModal = ({
                 const payload: createEmbeddingFromRepositoryRequest = {
                   repo_id: projectData.id,
                   repo_name: projectData.name,
+                  provider: projectData.source,
                   include: convertGlobStringToStringArray(includeValue),
                   exclude: convertGlobStringToStringArray(excludeValue),
                 };

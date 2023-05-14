@@ -4,7 +4,7 @@ import {
   deleteEmbeddingFromRepositoryRequest,
 } from "@baselinedocs/shared";
 import { supabase } from "../lib/supabase.js";
-import { downloadRepository, getHeadSha } from "../lib/github.js";
+import { downloadRepository, getHeadSha } from "../lib/providers/index.js";
 import { deleteIndex, startIngestion } from "../lib/indexes.js";
 import fs from "fs";
 import * as dotenv from "dotenv";
@@ -22,13 +22,15 @@ interface DataSyncAccessTokenFromRepositoryModel {
 interface RepositoryModel {
   repo_name: string;
   repo_owner: string;
+  provider_repo_id: string;
+  default_branch: string;
 }
 
 export async function createIndexFromRepository(
   req: Request<{}, {}, createEmbeddingFromRepositoryRequest>,
   res: Response
 ) {
-  const { repo_id, repo_name, include, exclude } = req.body;
+  const { repo_id, repo_name, provider, include, exclude } = req.body;
 
   if (repo_id === undefined || repo_name === undefined) {
     req.log.info(`Request missing required keys`);
@@ -36,9 +38,7 @@ export async function createIndexFromRepository(
   }
 
   const indexName = _.snakeCase(`${repo_name}-${repo_id}`.toLowerCase());
-
   const createIndexResponse = await _createIndex(indexName, repo_id);
-
   if (createIndexResponse.error || !createIndexResponse.data) {
     console.error(createIndexResponse.error);
     return res.sendStatus(500);
@@ -51,7 +51,9 @@ export async function createIndexFromRepository(
 
   const { data, error } = await supabase
     .from("data_syncs")
-    .select("access_token_data, repos!inner(repo_name, repo_owner)")
+    .select(
+      "access_token_data, repos!inner(provider_repo_id, repo_name, repo_owner, default_branch)"
+    )
     .eq("repos.repo_id", repo_id)
     .maybeSingle();
 
@@ -59,11 +61,11 @@ export async function createIndexFromRepository(
     console.error(error);
     throw error;
   }
-
   const validatedData = data as DataSyncAccessTokenFromRepositoryModel;
-  let sha: string
+  let sha: string;
   try {
     sha = await getHeadSha(
+      provider,
       validatedData.access_token_data.access_token,
       validatedData.repos[0]
     );
@@ -74,6 +76,7 @@ export async function createIndexFromRepository(
   let filepath: string;
   try {
     filepath = await downloadRepository(
+      provider,
       validatedData.access_token_data.access_token,
       validatedData.repos[0],
       sha,

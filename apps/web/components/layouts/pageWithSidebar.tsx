@@ -26,16 +26,22 @@ export const PageWithSidebar = ({ children }: { children: JSX.Element }) => {
     // TODO: Explore prop drillling from here instead of context
     // Once we add more Data Syncs this is where we will set them
     const setDataSyncsFromProjects = (projects: Array<Project>) => {
-      const updatedDataSyncs = { github: false };
+      const updatedDataSyncs = { github: false, gitlab: false };
 
       projects.forEach((project) => {
         if (project.source === "github") {
           updatedDataSyncs.github = true;
         }
+        if (project.source === "gitlab") {
+          updatedDataSyncs.gitlab = true;
+        }
       });
 
       // Only update if a change actually happened
-      if (dataSyncs.github != updatedDataSyncs.github) {
+      if (
+        dataSyncs.github != updatedDataSyncs.github ||
+        dataSyncs.gitlab != updatedDataSyncs.gitlab
+      ) {
         setDataSyncs(updatedDataSyncs);
       }
     };

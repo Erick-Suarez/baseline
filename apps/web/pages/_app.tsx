@@ -1,23 +1,11 @@
 import { BaselineContext } from "@/context/baselineContext";
 import "@/styles/globals.css";
 import type { AppProps } from "next/app";
-import { Children, cloneElement, useContext, useEffect, useState } from "react";
-import {
-  SessionProvider,
-  getSession,
-  signOut,
-  useSession,
-} from "next-auth/react";
+import { useEffect, useState } from "react";
+import { SessionProvider } from "next-auth/react";
 import { DataSyncs } from "@/types/project";
-import {
-  geRepositoriesWithEmbeddingsForOrganizationIdResponse,
-  getDataSyncsForOrganizationResponse,
-  Project,
-} from "@baselinedocs/shared";
-import { useRouter } from "next/router";
-import { parseCookies } from "nookies";
+import { Project } from "@baselinedocs/shared";
 import { PageWithSidebar } from "@/components/layouts/pageWithSidebar";
-import { GetServerSideProps, GetServerSidePropsContext } from "next/types";
 import { Session } from "next-auth";
 import { GoogleAnalytics } from "nextjs-google-analytics";
 import { Alert } from "@/components/alerts";
@@ -42,6 +30,7 @@ export default function App({
   const [projects, setProjects] = useState<Array<Project>>([defaultGPTProject]);
   const [dataSyncs, setDataSyncs] = useState<DataSyncs>({
     github: false,
+    gitlab: false,
   });
   const [errors, setErrors] = useState<Array<Alert>>([]);
   const [refresh, setRefresh] = useState(false);

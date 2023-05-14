@@ -1,11 +1,11 @@
-import { RiGithubFill } from "react-icons/ri";
+import { RiGitlabFill } from "react-icons/ri";
 import classNames from "classnames";
 import { DataSyncs } from "@/types/project";
 import { useContext } from "react";
 import { BaselineContext } from "@/context/baselineContext";
 import { parseCookies } from "nookies";
 
-export const SyncWithGithubButton = ({
+export const SyncWithGitlabButton = ({
   alreadySynced,
   organization_id,
   onSync,
@@ -17,7 +17,8 @@ export const SyncWithGithubButton = ({
   const { forceRefresh } = useContext(BaselineContext);
 
   const { setDataSyncs } = useContext(BaselineContext);
-  const clientId = process.env.NEXT_PUBLIC_GITHUB_CLIENT_ID;
+  const clientId = process.env.NEXT_PUBLIC_GITLAB_CLIENT_ID;
+  const redirect_uri = process.env.NEXT_PUBLIC_GITLAB_REDIRECT_URI;
   // Create state to persist between calls to the backend
   const stateObj = encodeURIComponent(
     JSON.stringify({
@@ -25,9 +26,9 @@ export const SyncWithGithubButton = ({
     })
   );
 
-  function _resyncGithub(organization_id: string) {
+  function _resyncGitlab(organization_id: string) {
     const resyncConfirm = window.confirm(
-      "Are you sure you want to resync Github? This will delete all current Github repositories"
+      "Are you sure you want to resync Gitlab? This will delete all current Gitlab repositories"
     );
 
     if (resyncConfirm) {
@@ -39,7 +40,7 @@ export const SyncWithGithubButton = ({
           Authorization: `BEARER ${parseCookies()["baseline.access-token"]}`,
         },
         body: JSON.stringify({
-          source: "github",
+          source: "gitlab",
           organization_id,
         }),
       }).then(() => {
@@ -52,10 +53,10 @@ export const SyncWithGithubButton = ({
     <button
       onClick={() => {
         if (alreadySynced) {
-          setDataSyncs({ github: true, gitlab: false });
-          _resyncGithub(organization_id);
+          setDataSyncs({ gitlab: true, github: false });
+          _resyncGitlab(organization_id);
         } else {
-          window.location.href = `https://github.com/login/oauth/authorize?state=${stateObj}&client_id=${clientId}&scope=repo&prompt=select_account`;
+          window.location.href = `https://gitlab.com/oauth/authorize?client_id=${clientId}&redirect_uri=${redirect_uri}&response_type=code&state=${stateObj}&scope=read_api+read_user+read_repository`;
         }
       }}
       className={classNames(
@@ -63,13 +64,13 @@ export const SyncWithGithubButton = ({
         {
           "bg-slate-300 text-slate-400 hover:bg-black hover:text-white":
             alreadySynced,
-          "bg-indigo-600 text-white hover:bg-indigo-800 ": !alreadySynced,
+          "bg-orange-600 text-white hover:bg-orange-800 ": !alreadySynced,
         }
       )}
     >
-      <RiGithubFill className="h-5 w-5" />
+      <RiGitlabFill className="h-5 w-5" />
       <h1 className="">
-        {alreadySynced ? "Resync Github" : "Sync with Github"}
+        {alreadySynced ? "Resync Gitlab" : "Sync with Gitlab"}
       </h1>
     </button>
   );

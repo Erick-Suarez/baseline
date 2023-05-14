@@ -4,7 +4,9 @@ import _ from "lodash";
 import fs from "fs";
 import path from "path";
 
-export async function authGithub(code: any) {
+const github: Record<string, any> = {};
+
+github.authenticate = async function (code: any) {
   const response = await fetch(
     `https://github.com/login/oauth/access_token?client_id=${process.env.GITHUB_CLIENT_ID}&client_secret=${process.env.GITHUB_CLIENT_SECRET}&code=${code}`,
     {
@@ -16,9 +18,9 @@ export async function authGithub(code: any) {
   );
 
   return await response.json();
-}
+};
 
-export async function getRepositories(accessToken: string) {
+github.getRepositories = async function (accessToken: string) {
   const octokit = new Octokit({
     auth: accessToken,
   });
@@ -29,37 +31,49 @@ export async function getRepositories(accessToken: string) {
     },
   });
 
-  return response.data as Array<{
+  return response.data.map((repo) => ({
+    id: repo.id,
+    name: repo.name,
+    full_name: repo.full_name,
+    owner: repo.owner.login,
+    default_branch: repo.default_branch,
+  })) as Array<{
+    id: number;
     name: string;
     full_name: string;
-    owner: { login: string };
+    owner: string;
+    default_branch: string;
   }>;
-}
+};
 
 export async function getHeadSha(
   accessToken: string,
   repo: {
     repo_name: string;
     repo_owner: string;
-  },
+    default_branch: string;
+  }
 ): Promise<string> {
   const octokit = new Octokit({
     auth: accessToken,
   });
 
-  const response = await octokit.request("GET /repos/{owner}/{repo}/git/ref/{ref}", {
-    owner: repo.repo_owner,
-    repo: repo.repo_name,
-    ref: "heads/master",
-    headers: {
-      "X-GitHub-Api-Version": "2022-11-28",
-    },
-  });
+  const response = await octokit.request(
+    "GET /repos/{owner}/{repo}/git/ref/heads/{default_branch}",
+    {
+      owner: repo.repo_owner,
+      repo: repo.repo_name,
+      default_branch: repo.default_branch,
+      headers: {
+        "X-GitHub-Api-Version": "2022-11-28",
+      },
+    }
+  );
 
   return response.data.object.sha;
 }
 
-export async function downloadRepository(
+github.downloadRepository = async function (
   accessToken: string,
   repo: {
     repo_name: string;
@@ -72,14 +86,17 @@ export async function downloadRepository(
     auth: accessToken,
   });
 
-  const tarball = await octokit.request("GET /repos/{owner}/{repo}/tarball/{sha}", {
-    owner: repo.repo_owner,
-    repo: repo.repo_name,
-    sha: sha,
-    headers: {
-      "X-GitHub-Api-Version": "2022-11-28",
-    },
-  });
+  const tarball = await octokit.request(
+    "GET /repos/{owner}/{repo}/tarball/{sha}",
+    {
+      owner: repo.repo_owner,
+      repo: repo.repo_name,
+      sha,
+      headers: {
+        "X-GitHub-Api-Version": "2022-11-28",
+      },
+    }
+  );
 
   const tempDir = "temp/repositories";
   if (!fs.existsSync(tempDir)) {
@@ -109,7 +126,7 @@ export async function downloadRepository(
   }
 
   return path.join("temp/repositories/", filename.replace(".tar.gz", ""));
-}
+};
 
 function extractFilenameFromContentDisposition(data: string) {
   const regex = /filename=(.*)/;
@@ -122,3 +139,5 @@ function extractFilenameFromContentDisposition(data: string) {
 
   return matches[1];
 }
+
+export default github;

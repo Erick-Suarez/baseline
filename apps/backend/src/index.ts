@@ -7,6 +7,7 @@ import * as dotenv from "dotenv";
 
 import { logger, loggerMiddleware } from "./lib/logger.js";
 import { BaselineChatQAModel } from "./lib/models/baselineQA.js";
+import providersRoute from "./routes/providersRoute.js";
 import dataSyncRoute from "./routes/dataSyncRoute.js";
 import embeddingIndexRoute from "./routes/EmbeddingIndexRoute.js";
 import repositoryRoute from "./routes/repositoryRoute.js";
@@ -17,7 +18,6 @@ import {
   Project,
   ServerSocketError,
 } from "@baselinedocs/shared";
-import { createGithubDataSyncForOrganization } from "./controllers/dataSyncController.js";
 import { authenticateToken } from "./controllers/authController.js";
 import { BasicChatCompletionModel } from "./lib/models/basicChat.js";
 
@@ -42,6 +42,7 @@ app.use(
 );
 
 // Configure Routes
+app.use("/providers", providersRoute);
 app.use("/data-sync", dataSyncRoute);
 app.use("/baseline", embeddingIndexRoute);
 app.use("/projects", repositoryRoute);
@@ -56,30 +57,6 @@ app.get("/test", authenticateToken, (req: Request, res: Response) => {
   res.status(200).json({ status: "Authenticated" });
 });
 
-// Handle the callback from the GitHub OAuth authorization page
-app.get("/auth/github/callback", async (req, res) => {
-  if (!req.query.state || !req.query.code) {
-    req.log.info("Missing query params from github oauth callback", req.query);
-    return res.status(400).json({ message: "Missing query params" });
-  }
-
-  try {
-    const stateObj = JSON.parse(decodeURIComponent(req.query.state as string));
-    const organization_id = stateObj.organization_id;
-
-    await createGithubDataSyncForOrganization(
-      Number(organization_id),
-      req.query.code as string
-    );
-
-    // redirect the user back to the manageData page
-    res.redirect(`${process.env.BASELINE_FRONTEND_URL}/manageData`);
-  } catch (error) {
-    req.log.info(error);
-    res.sendStatus(500);
-  }
-});
-
 // error handler
 app.use(function (err: any, req: Request, res: Response, next: NextFunction) {
   // set locals, only providing error in development
@@ -91,6 +68,7 @@ app.use(function (err: any, req: Request, res: Response, next: NextFunction) {
   res.status(err.status || 500).json({ error: err });
 });
 
+// socket stuff below
 const server = http.createServer(app);
 const io = new Server(server, {
   cors: {

@@ -1,5 +1,6 @@
 import { ProjectDataTable } from "@/components/dataSyncTable";
 import { SyncWithGithubButton } from "@/components/syncWithGithub";
+import { SyncWithGitlabButton } from "@/components/syncWithGitlab";
 import {
   useCallback,
   useContext,
@@ -37,16 +38,22 @@ export default function ManageDataPage({}: {}) {
   useEffect(() => {
     // Once we add more Data Syncs this is where we will set them
     const setDataSyncsFromProjects = (projects: Array<Project>) => {
-      const updatedDataSyncs = { github: false };
+      const updatedDataSyncs = { github: false, gitlab: false };
 
       projects.forEach((project) => {
         if (project.source === "github") {
           updatedDataSyncs.github = true;
         }
+        if (project.source === "gitlab") {
+          updatedDataSyncs.gitlab = true;
+        }
       });
 
       // Only update if a change actually happened
-      if (dataSyncs.github != updatedDataSyncs.github) {
+      if (
+        dataSyncs.github != updatedDataSyncs.github ||
+        dataSyncs.gitlab != updatedDataSyncs.gitlab
+      ) {
         setDataSyncs(updatedDataSyncs);
       }
     };
@@ -145,15 +152,27 @@ export default function ManageDataPage({}: {}) {
             showErrorMessage={errorDuringFetching}
           />
         </div>
-        {!errorDuringFetching && (
-          <SyncWithGithubButton
-            alreadySynced={dataSyncs.github}
-            organization_id={organization_id}
-            onSync={(updatedSyncs: DataSyncs) => {
-              setDataSyncs(updatedSyncs);
-            }}
-          />
-        )}
+
+        <div className="flex w-full items-center justify-center gap-8">
+          {!errorDuringFetching && (
+            <SyncWithGithubButton
+              alreadySynced={dataSyncs.github}
+              organization_id={organization_id}
+              onSync={(updatedSyncs: DataSyncs) => {
+                setDataSyncs(updatedSyncs);
+              }}
+            />
+          )}
+          {!errorDuringFetching && (
+            <SyncWithGitlabButton
+              alreadySynced={dataSyncs.gitlab}
+              organization_id={organization_id}
+              onSync={(updatedSyncs: DataSyncs) => {
+                setDataSyncs(updatedSyncs);
+              }}
+            />
+          )}
+        </div>
       </div>
     );
   }

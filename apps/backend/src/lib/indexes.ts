@@ -69,6 +69,7 @@ function loadFiles(
   include?: Array<string>,
   exclude?: Array<string>
 ) {
+  // @ts-ignore
   const files = glob.sync(include || "*", {
     cwd: directory,
     nodir: true,

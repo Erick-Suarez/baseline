@@ -27,6 +27,7 @@ export interface deleteDataSyncRequest {
 export interface createEmbeddingFromRepositoryRequest {
   repo_id: string;
   repo_name: string;
+  provider: string;
   include?: Array<string>;
   exclude?: Array<string>;
 }
@@ -37,6 +38,7 @@ export interface getDataSyncsForOrganizationRequest {
 
 export interface getDataSyncsForOrganizationResponse {
   github: boolean;
+  gitlab: boolean;
 }
 
 export interface geRepositoriesWithEmbeddingsForOrganizationIdRequest {
@@ -74,6 +76,7 @@ export interface EmbeddingIndex {
 
 export enum DATA_SYNC_SOURCES {
   GITHUB = "github",
+  GITLAB = "gitlab",
 }
 
 export interface Project {
