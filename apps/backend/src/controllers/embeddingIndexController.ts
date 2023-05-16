@@ -3,7 +3,8 @@ import {
   createEmbeddingFromRepositoryRequest,
   deleteEmbeddingFromRepositoryRequest,
   updateEmbeddingFromRepositoryRequest,
-  RepositoryDiff,
+  AccessTokenData,
+  RepositoryModel,
 } from "@baselinedocs/shared";
 import { supabase, supabaseIndexes } from "../lib/supabase.js";
 import {
@@ -24,17 +25,8 @@ import path from "path";
 dotenv.config();
 
 interface DataSyncAccessTokenFromRepositoryModel {
-  access_token_data: {
-    access_token: string;
-  };
+  access_token_data: AccessTokenData;
   repos: RepositoryModel[];
-}
-
-interface RepositoryModel {
-  repo_name: string;
-  repo_owner: string;
-  provider_repo_id: string;
-  default_branch: string;
 }
 
 function deleteFilesNotInList(
@@ -90,7 +82,7 @@ export async function createIndexFromRepository(
   const { data, error } = await supabase
     .from("data_syncs")
     .select(
-      "access_token_data, repos!inner(provider_repo_id, repo_name, repo_owner, default_branch)"
+      "access_token_data, repos!inner(provider_repo_id, repo_name, data_sync_id, repo_owner, default_branch)"
     )
     .eq("repos.repo_id", repo_id)
     .maybeSingle();
@@ -104,7 +96,7 @@ export async function createIndexFromRepository(
   try {
     sha = await getHeadSha(
       provider,
-      validatedData.access_token_data.access_token,
+      validatedData.access_token_data,
       validatedData.repos[0]
     );
   } catch (error) {
@@ -115,7 +107,7 @@ export async function createIndexFromRepository(
   try {
     filepath = await downloadRepository(
       provider,
-      validatedData.access_token_data.access_token,
+      validatedData.access_token_data,
       validatedData.repos[0],
       sha,
       req.log
@@ -169,7 +161,7 @@ export async function updateIndexFromRepository(
   const { data, error } = await supabase
     .from("data_syncs")
     .select(
-      "access_token_data, repos!inner(provider_repo_id, repo_name, repo_owner, default_branch)"
+      "access_token_data, repos!inner(provider_repo_id, repo_name, data_sync_id, repo_owner, default_branch)"
     )
     .eq("repos.repo_id", repo_id)
     .maybeSingle();
@@ -183,12 +175,12 @@ export async function updateIndexFromRepository(
 
   const head = await getHeadSha(
     provider,
-    validatedData.access_token_data.access_token,
+    validatedData.access_token_data,
     validatedData.repos[0]
   );
   const diff = await getDiff(
     provider,
-    validatedData.access_token_data.access_token,
+    validatedData.access_token_data,
     validatedData.repos[0],
     embeddingIndexInfo.data.last_repo_commit,
     head
@@ -204,7 +196,7 @@ export async function updateIndexFromRepository(
     try {
       filepath = await downloadRepository(
         provider,
-        validatedData.access_token_data.access_token,
+        validatedData.access_token_data,
         validatedData.repos[0],
         head,
         req.log

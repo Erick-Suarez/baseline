@@ -119,4 +119,22 @@ export interface RepositoryDiff {
   files_removed: Array<string>;
 }
 
+export interface AccessTokenData {
+  access_token: string;
+  token_type: string;
+  expires_in?: number;
+  refresh_token?: string;
+  scope: string;
+  created_at?: number;
+}
+
+export interface RepositoryModel {
+  repo_id: number;
+  repo_name: string;
+  data_sync_id: string;
+  repo_owner: string;
+  provider_repo_id: string;
+  default_branch: string;
+}
+
 export interface RelatedEmbeddings extends Array<[Record, number]> {}
