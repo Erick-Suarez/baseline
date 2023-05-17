@@ -8,6 +8,7 @@ import { supabase } from "../lib/supabase.js";
 export async function geRepositoriesWithEmbeddingsForOrganizationId(
   req: Request<geRepositoriesWithEmbeddingsForOrganizationIdRequest, {}, {}>,
   res: Response,
+  next: NextFunction
 ) {
   try {
     const { organization_id } = req.params;
@@ -25,11 +26,11 @@ export async function geRepositoriesWithEmbeddingsForOrganizationId(
       req.log.error(error);
       return res.sendStatus(500);
     }
-    
+
     return res
       .status(200)
       .json(data as geRepositoriesWithEmbeddingsForOrganizationIdResponse);
   } catch (err) {
-    console.error(err);
+    return next(err);
   }
 }
