@@ -15,13 +15,14 @@ interface User {
 export async function authenticateProvider(
   req: Request,
   res: Response,
+  next: NextFunction,
   provider: string
 ) {
-  if (!req.query.state || !req.query.code) {
-    req.log.info("Missing query params from github oauth callback", req.query);
-    return res.status(400).json({ message: "Missing query params" });
-  }
   try {
+    if (!req.query.state || !req.query.code) {
+      req.log.info("Missing query params from github oauth callback", req.query);
+      return res.status(400).json({ message: "Missing query params" });
+    }
     const stateObj = JSON.parse(decodeURIComponent(req.query.state as string));
     const organization_id = stateObj.organization_id;
 
@@ -30,11 +31,8 @@ export async function authenticateProvider(
       req.query.code as string,
       provider
     );
-
-    // redirect the user back to the manageData page
-    res.redirect(`${process.env.BASELINE_FRONTEND_URL}/manageData`);
-  } catch (error) {
-    req.log.info(error);
-    res.sendStatus(500);
+    return res.redirect(`${process.env.BASELINE_FRONTEND_URL}/manageData`);
+  } catch (err) {
+    return next(err);
   }
 }

@@ -1,4 +1,4 @@
-import { Request, Response } from "express";
+import { Request, Response, NextFunction } from "express";
 import { authenticate, getRepositories } from "../lib/providers/index.js";
 import {
   DATA_SYNC_SOURCES,
@@ -62,98 +62,107 @@ export async function createDataSyncForOrganization(
 
 export async function getDataSyncsForOrganization(
   req: Request<getDataSyncsForOrganizationRequest, {}, {}>,
-  res: Response
+  res: Response,
+  next: NextFunction
 ) {
-  const { organization_id } = req.params;
+  try {
+    const { organization_id } = req.params;
 
-  if (organization_id === undefined) {
-    req.log.info(`Request missing required keys`);
-    return res.sendStatus(400);
-  }
-
-  const { data, error } = await supabase
-    .from("data_syncs")
-    .select("source")
-    .eq("organization_id", organization_id);
-
-  if (error || !data) {
-    req.log.error(error);
-    return res.status(500).send();
-  }
-
-  /* Insert other data sources here as we add support for them */
-  const syncedSources: getDataSyncsForOrganizationResponse = {
-    github: false,
-    gitlab: false,
-  };
-
-  data.forEach((data_sync) => {
-    switch (data_sync.source as string) {
-      case DATA_SYNC_SOURCES.GITHUB:
-        syncedSources.github = true;
-        break;
-      case DATA_SYNC_SOURCES.GITLAB:
-        syncedSources.gitlab = true;
-      default:
-        break;
+    if (organization_id === undefined) {
+      req.log.info(`Request missing required keys`);
+      return res.sendStatus(400);
     }
-  });
-
-  res.status(200).json(syncedSources);
+  
+    const { data, error } = await supabase
+      .from("data_syncs")
+      .select("source")
+      .eq("organization_id", organization_id);
+  
+    if (error || !data) {
+      req.log.error(error);
+      return res.status(500).send();
+    }
+  
+    /* Insert other data sources here as we add support for them */
+    const syncedSources: getDataSyncsForOrganizationResponse = {
+      github: false,
+      gitlab: false,
+    };
+  
+    data.forEach((data_sync) => {
+      switch (data_sync.source as string) {
+        case DATA_SYNC_SOURCES.GITHUB:
+          syncedSources.github = true;
+          break;
+        case DATA_SYNC_SOURCES.GITLAB:
+          syncedSources.gitlab = true;
+        default:
+          break;
+      }
+    });
+    return res.status(200).json(syncedSources);
+  } catch (err) {
+    return next(err);
+  }
 }
 
 export async function deleteDataSync(
   req: Request<{}, {}, deleteDataSyncRequest>,
-  res: Response
+  res: Response,
+  next: NextFunction
 ) {
-  // Delete Datasync for organization
-  // First find all indexes for organization and delete them then delete the data syncs
+  try {
+    // Delete Datasync for organization
+    // First find all indexes for organization and delete them then delete the data syncs
 
-  const { organization_id, source } = req.body;
+    const { organization_id, source } = req.body;
 
-  if (organization_id === undefined || source === undefined) {
-    req.log.info(`Request missing required keys`);
-    return res.sendStatus(400);
-  }
+    if (organization_id === undefined || source === undefined) {
+      req.log.info(`Request missing required keys`);
+      return res.sendStatus(400);
+    }
 
-  const reposFromOrganizationRequest = await supabase
-    .from("repos")
-    .select(
-      "repo_id, embedding_indexes(index_name), data_syncs!inner(data_sync_id)"
-    )
-    .eq("data_syncs.organization_id", organization_id);
+    const reposFromOrganizationRequest = await supabase
+      .from("repos")
+      .select(
+        "repo_id, embedding_indexes(index_name), data_syncs!inner(data_sync_id)"
+      )
+      .eq("data_syncs.organization_id", organization_id);
 
-  if (
-    reposFromOrganizationRequest.error ||
-    !reposFromOrganizationRequest.data
-  ) {
-    req.log.error(reposFromOrganizationRequest.error);
-    return res.status(500).send();
-  }
+    if (
+      reposFromOrganizationRequest.error ||
+      !reposFromOrganizationRequest.data
+    ) {
+      req.log.error(reposFromOrganizationRequest.error);
+      return res.status(500).send();
+    }
 
-  const validatedData = reposFromOrganizationRequest.data as unknown as {
-    embedding_indexes: { index_name: string }[];
-  }[];
+    const validatedData = reposFromOrganizationRequest.data as unknown as {
+      embedding_indexes: { index_name: string }[];
+    }[];
 
-  validatedData.forEach((repo) => {
-    repo.embedding_indexes.forEach((index) => {
-      deleteIndex(index.index_name, req.log);
+    validatedData.forEach((repo) => {
+      repo.embedding_indexes.forEach((index) => {
+        deleteIndex(index.index_name, req.log);
+      });
     });
-  });
 
-  const { error } = await supabase
-    .from("data_syncs")
-    .delete()
-    .eq("source", source)
-    .eq("organization_id", organization_id);
+    const { error } = await supabase
+      .from("data_syncs")
+      .delete()
+      .eq("source", source)
+      .eq("organization_id", organization_id);
 
-  if (error) {
-    req.log.error(error);
-    return res.status(500).send();
+    if (error) {
+      req.log.error(error);
+      return res.status(500).send();
+    }
+
+    // redirect the user back to the manageData page
+    return res.status(200).json({
+      message: `Successfully deleted '${req.body.source}' data sync for ${req.body.organization_id}`,
+    });
+  } catch (err) {
+    return next(err);
   }
-
-  // redirect the user back to the manageData page
-  res.status(200).json({
-    message: `Successfully deleted '${req.body.source}' data sync for ${req.body.organization_id}`,
-  });
 }

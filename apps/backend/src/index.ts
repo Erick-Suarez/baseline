@@ -1,4 +1,4 @@
-import express, { Express, Request, Response, NextFunction } from "express";
+import express, { Express, Request, Response } from "express";
 import http from "http";
 import { Server } from "socket.io";
 import cors from "cors";
@@ -20,6 +20,7 @@ import {
 } from "@baselinedocs/shared";
 import { authenticateToken } from "./controllers/authController.js";
 import { BasicChatCompletionModel } from "./lib/models/basicChat.js";
+import { errorHandler } from './error.js';
 
 dotenv.config();
 
@@ -40,6 +41,7 @@ app.use(
     credentials: true,
   })
 );
+app.use(errorHandler);
 
 // Configure Routes
 app.use("/providers", providersRoute);
@@ -55,17 +57,6 @@ app.get("/health", (req: Request, res: Response) => {
 app.get("/test", authenticateToken, (req: Request, res: Response) => {
   req.log.info("hit test for authentication");
   res.status(200).json({ status: "Authenticated" });
-});
-
-// error handler
-app.use(function (err: any, req: Request, res: Response, next: NextFunction) {
-  // set locals, only providing error in development
-  res.locals.message = err.message;
-  res.locals.error = req.app.get("env") === "development" ? err : {};
-
-  req.log.info(err);
-
-  res.status(err.status || 500).json({ error: err });
 });
 
 // socket stuff below
